@@ -90,13 +90,19 @@ const CollegeDashboard = () => {
 
       <main className="flex-1 p-8 overflow-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-            Welcome Back!
-          </h1>
-          <p className="text-muted-foreground">
-            Here's what's happening with your placements today.
-          </p>
+        <div className="mb-8 flex justify-between items-end">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+              Welcome Back!
+            </h1>
+            <p className="text-muted-foreground">
+              Here's what's happening with your placements today.
+            </p>
+          </div>
+          <Button onClick={() => navigate("/college/verification")} className="gap-2">
+            <Users className="w-4 h-4" />
+            Verify Students
+          </Button>
         </div>
 
         {/* Stats Grid */}
@@ -155,11 +161,10 @@ const CollegeDashboard = () => {
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-semibold text-foreground">{company.name}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        company.status === "Hiring" 
-                          ? "bg-sage/20 text-sage" 
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${company.status === "Hiring"
+                          ? "bg-sage/20 text-sage"
                           : "bg-accent/20 text-accent"
-                      }`}>
+                        }`}>
                         {company.status}
                       </span>
                     </div>

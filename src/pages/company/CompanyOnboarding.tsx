@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Leaf, Building2, User, FileText, ChevronRight, ChevronLeft, Check, 
+import {
+  Leaf, Building2, User, FileText, ChevronRight, ChevronLeft, Check,
   MapPin, Globe, Phone, Mail, Users, Briefcase, Calendar, Award, Upload, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -99,7 +99,7 @@ const CompanyOnboarding = () => {
   const [minCgpa, setMinCgpa] = useState("");
   const [packageRange, setPackageRange] = useState("");
   const [internshipOffered, setInternshipOffered] = useState(false);
-  
+
   // Internship Details
   const [internshipStipend, setInternshipStipend] = useState("");
   const [internshipDuration, setInternshipDuration] = useState("");
@@ -207,12 +207,12 @@ const CompanyOnboarding = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!validateStep(4)) return;
-    
+
     setIsLoading(true);
-    
-    // Save company data to store
+
+    // Save company data to store (backend)
     const companyData: CompanyData = {
       companyName,
       gstNumber,
@@ -251,17 +251,57 @@ const CompanyOnboarding = () => {
       benefits,
       certificateFileNames: certificateFiles.map(f => f.name),
     };
-    
-    saveCompanyData(companyData);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Registration Complete!",
-        description: "Welcome to Mockello. Your company profile is now active.",
+
+    try {
+      const email = localStorage.getItem("userEmail");
+      if (!email) {
+        toast({
+          title: "Error",
+          description: "User email not found. Please login again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch("http://localhost:8000/company/onboarding", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          ...companyData
+        }),
       });
-      navigate("/company/dashboard");
-    }, 1500);
+
+      if (response.ok) {
+        // Keep local store sync if needed, or remove it. 
+        // keeping it for potential other frontend logic that relies on it
+        saveCompanyData(companyData);
+
+        toast({
+          title: "Registration Complete!",
+          description: "Welcome to Mockello. Your company profile is pending admin approval.",
+        });
+        navigate("/approval-pending");
+      } else {
+        toast({
+          title: "Onboarding Failed",
+          description: "Failed to save company details.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -288,11 +328,10 @@ const CompanyOnboarding = () => {
             <div key={step.id} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${
-                    currentStep >= step.id
-                      ? "bg-forest-medium text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${currentStep >= step.id
+                    ? "bg-forest-medium text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   {currentStep > step.id ? (
                     <Check className="w-5 h-5" />
@@ -300,17 +339,15 @@ const CompanyOnboarding = () => {
                     <step.icon className="w-5 h-5" />
                   )}
                 </div>
-                <span className={`text-xs mt-1 hidden md:block ${
-                  currentStep >= step.id ? "text-foreground" : "text-muted-foreground"
-                }`}>
+                <span className={`text-xs mt-1 hidden md:block ${currentStep >= step.id ? "text-foreground" : "text-muted-foreground"
+                  }`}>
                   {step.title}
                 </span>
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-12 md:w-20 h-1 mx-2 rounded transition-all duration-300 ${
-                    currentStep > step.id ? "bg-forest-medium" : "bg-muted"
-                  }`}
+                  className={`w-12 md:w-20 h-1 mx-2 rounded transition-all duration-300 ${currentStep > step.id ? "bg-forest-medium" : "bg-muted"
+                    }`}
                 />
               )}
             </div>
@@ -330,7 +367,7 @@ const CompanyOnboarding = () => {
                   Basic details about your organization
                 </p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-1.5 block">
@@ -715,7 +752,7 @@ const CompanyOnboarding = () => {
                       <Briefcase className="w-4 h-4 text-forest-medium" />
                       Internship Details
                     </h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-foreground mb-1.5 block">
@@ -735,7 +772,7 @@ const CompanyOnboarding = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div>
                         <label className="text-sm font-medium text-foreground mb-1.5 block">
                           Internship Duration
@@ -754,7 +791,7 @@ const CompanyOnboarding = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div>
                         <label className="text-sm font-medium text-foreground mb-1.5 block">
                           Internship Type
@@ -770,7 +807,7 @@ const CompanyOnboarding = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div>
                         <label className="text-sm font-medium text-foreground mb-1.5 block">
                           PPO/Conversion Opportunity
@@ -786,7 +823,7 @@ const CompanyOnboarding = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="md:col-span-2">
                         <label className="text-sm font-medium text-foreground mb-1.5 block">
                           Internship Roles/Domains
@@ -854,7 +891,7 @@ const CompanyOnboarding = () => {
                   <p className="text-xs text-muted-foreground mb-3">
                     Upload certificates, awards, or recognitions your company has received
                   </p>
-                  
+
                   <div
                     onClick={() => fileInputRef.current?.click()}
                     className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-forest-medium/50 hover:bg-muted/30 transition-all"

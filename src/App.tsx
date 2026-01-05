@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import ApprovalPending from "./pages/ApprovalPending";
 
 // College Module
 import CollegeLogin from "./pages/college/CollegeLogin";
@@ -42,6 +43,8 @@ import StudentCompaniesPage from "./pages/student/StudentCompaniesPage";
 import StudentCompanyDetailPage from "./pages/student/StudentCompanyDetailPage";
 import StudentApplicationsPage from "./pages/student/StudentApplicationsPage";
 import StudentProfilePage from "./pages/student/StudentProfilePage";
+import StudentApprovalPending from "./pages/student/StudentApprovalPending";
+import CollegeStudentVerification from "./pages/college/CollegeStudentVerification";
 
 // Mock Placement Module
 import MockelloLanding from "./pages/mock-placement/MockelloLanding";
@@ -76,6 +79,7 @@ const App = () => (
           <Route path="/college/login" element={<CollegeLogin />} />
           <Route path="/college/onboarding" element={<CollegeOnboarding />} />
           <Route path="/college/dashboard" element={<CollegeDashboard />} />
+          <Route path="/college/verification" element={<CollegeStudentVerification />} />
           <Route path="/college/profile" element={<CollegeProfile />} />
           <Route path="/college/companies" element={<CollegeCompanies />} />
           <Route path="/college/company/:id" element={<CompanyDetail />} />
@@ -103,6 +107,7 @@ const App = () => (
           <Route path="/student" element={<StudentLandingPage />} />
           <Route path="/student/login" element={<StudentAuthPage />} />
           <Route path="/student/auth" element={<StudentAuthPage />} />
+          <Route path="/student/approval-pending" element={<StudentApprovalPending />} />
           <Route path="/student/onboarding" element={<StudentOnboardingPage />} />
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/companies" element={<StudentCompaniesPage />} />
@@ -126,6 +131,9 @@ const App = () => (
           <Route path="/interview/select" element={<CompanySelection />} />
           <Route path="/interview/:companyId" element={<InterviewPage />} />
           <Route path="/interview/result" element={<ResultPage />} />
+
+          {/* Common Routes */}
+          <Route path="/approval-pending" element={<ApprovalPending />} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

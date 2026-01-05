@@ -1,24 +1,80 @@
+# Mockello MVP - Placement Management System
 
+Mockello is a comprehensive placement management platform designed to streamline the interaction between **Students**, **Colleges**, **Companies**, and **Super Admins**.
 
-**Use your preferred IDE**
+## 🚀 Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Follow these instructions to set up and run the project locally.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Prerequisites
 
-Follow these steps:
+- **Node.js** (v18 or higher)
+- **Python** (v3.9 or higher)
+- **MongoDB Atlas** (The project is currently configured with a demo URI)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🛠️ Backend Setup (FastAPI)
 
-# Step 3: Install the necessary dependencies.
-npm i
+The backend handles authentication, database interactions, and business logic.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+1. **Navigate to the root directory.**
+2. **(Optional) Create a virtual environment:**
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate  # On Windows
+   source venv/bin/activate  # On macOS/Linux
+   ```
+3. **Install dependencies:**
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+   *Alternatively, run `start_backend.bat` on Windows to auto-install and start.*
+4. **Run the server:**
+   ```bash
+   python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+   The backend will be available at `http://localhost:8000`.
 
+---
+
+## 💻 Frontend Setup (React + Vite)
+
+The frontend provides the user interface for all four roles.
+
+1. **Navigate to the root directory.**
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   The frontend will be available at `http://localhost:8081`.
+
+---
+
+## 🔐 Default Debug Credentials
+
+For testing purposes, we have enabled a debug bypass. You can use the following credentials for any role (**Student**, **College**, **Company**, **Admin**):
+
+- **Email:** `abc@gmail.com`
+- **Password:** `1234`
+
+---
+
+## 📁 Project Structure
+
+- `src/`: Frontend React components and pages.
+- `backend/`: FastAPI application, routers, and models.
+- `backend/routers/`: Specific API routes for different modules.
+- `public/`: Static assets and logos.
+
+## ✅ Verification Flow
+
+1. **Colleges/Companies** register and complete onboarding.
+2. They are redirected to a **Pending Approval** page.
+3. **Super Admin** logs in to `http://localhost:8081/admin/login`.
+4. The Admin approves the request in the dashboard.
+5. Once approved, the College/Company can access their dashboard!

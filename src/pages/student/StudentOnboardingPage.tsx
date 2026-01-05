@@ -53,15 +53,72 @@ const StudentOnboardingPage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     } else {
-      toast({
-        title: "Onboarding Complete!",
-        description: "Welcome to StudentHub. Redirecting to dashboard...",
-      });
-      navigate("/student/dashboard");
+      // Final Step: Submit Data
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          toast({
+            title: "Error",
+            description: "User session not found. Please login again.",
+            variant: "destructive"
+          });
+          navigate("/student/login");
+          return;
+        }
+
+        const payload = {
+          email: userEmail,
+          ...formData,
+          // For MVP, we are sending filenames as strings since backend expects JSON
+          // Real file upload would require FormData and a multipart endpoint
+          resumeFile_name: formData.resumeFile ? formData.resumeFile.name : null,
+          internshipFile_name: formData.internshipFile ? formData.internshipFile.name : null,
+          cgpa: parseFloat(formData.cgpa) || 0, // Ensure number
+        };
+
+        // Remove actual File objects from payload to avoid serialization issues
+        delete (payload as any).resumeFile;
+        delete (payload as any).internshipFile;
+
+        const response = await fetch("http://localhost:8000/student/onboarding", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.detail || "Onboarding failed");
+        }
+
+        toast({
+          title: "Onboarding Complete!",
+          description: "Your profile has been updated.",
+        });
+
+        // Check verification (though usually onboarding is post-verification, 
+        // sometimes users complete it while pending?)
+        // Safer to just go to dashboard or pending page depending on status?
+        // For now, goto waiting page if not verified? 
+        // But logic says: Student enters -> Waiting -> Verified -> Dashboard
+        // Usually Onboarding happens AFTER login. 
+        // If they are allowed to onboard, they might be logged in.
+
+        navigate("/student/approval-pending"); // Safest default after onboarding for new students
+      } catch (error: any) {
+        console.error(error);
+        toast({
+          title: "Submission Error",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -95,20 +152,18 @@ const StudentOnboardingPage = () => {
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                  currentStep > step.id
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${currentStep > step.id
                     ? "bg-secondary text-secondary-foreground"
                     : currentStep === step.id
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground"
-                }`}
+                  }`}
               >
                 {currentStep > step.id ? <Check className="w-5 h-5" /> : step.id}
               </div>
               {index < steps.length - 1 && (
-                <div className={`w-20 h-0.5 ${
-                  currentStep > step.id ? "bg-secondary" : "bg-border"
-                }`} />
+                <div className={`w-20 h-0.5 ${currentStep > step.id ? "bg-secondary" : "bg-border"
+                  }`} />
               )}
             </div>
           ))}

@@ -8,21 +8,49 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { useEffect } from "react";
+// ... imports
+
 const CollegeProfile = () => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const collegeEmail = localStorage.getItem("userEmail");
+
   const [profile, setProfile] = useState({
-    collegeName: "TechVarsity Institute of Engineering",
-    university: "Mumbai University",
-    location: "Mumbai, Maharashtra",
-    address: "123 Education Lane, Andheri West, Mumbai - 400058",
-    officerName: "Dr. Priya Sharma",
-    officerEmail: "priya.sharma@techvarsity.edu",
-    officerPhone: "+91 98765 43210",
-    courses: "B.Tech CSE, B.Tech ECE, B.Tech IT, MBA, BBA",
-    totalStudents: "1,200",
-    website: "www.techvarsity.edu",
+    collegeName: "",
+    university: "",
+    location: "",
+    address: "",
+    officerName: "",
+    officerEmail: "",
+    officerPhone: "",
+    courses: "",
+    totalStudents: "",
+    website: "",
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!collegeEmail) return;
+      try {
+        const response = await fetch(`http://localhost:8000/college/me/${collegeEmail}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(prev => ({
+            ...prev,
+            collegeName: data.collegeName || "Mumbai Institute of Technology", // Fallback or current default
+            university: data.university || "Mumbai University",
+            officerEmail: data.email,
+            location: data.location || "Mumbai, Maharashtra",
+            // Map other fields if they exist in DB, otherwise keep defaults or empty
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile");
+      }
+    };
+    fetchProfile();
+  }, [collegeEmail]);
 
   const handleLogout = () => {
     navigate("/");
@@ -79,7 +107,7 @@ const CollegeProfile = () => {
               <p className="text-muted-foreground text-sm mb-4">
                 {profile.university}
               </p>
-              
+
               <div className="space-y-3 text-left pt-4 border-t border-border">
                 <div className="flex items-center gap-3 text-sm">
                   <MapPin size={16} className="text-sage" />

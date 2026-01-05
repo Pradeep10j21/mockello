@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import AdminSidebar from "@/components/AdminSidebar";
 import { GraduationCap, Building2, Users, Clock, TrendingUp, CheckCircle, XCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
@@ -43,36 +43,93 @@ const AdminDashboard = () => {
     },
   ];
 
-  const [pendingColleges, setPendingColleges] = useState([
-    { id: 1, name: "ABC Institute of Technology", location: "Delhi", date: "Dec 10, 2024" },
-    { id: 2, name: "XYZ Engineering College", location: "Chennai", date: "Dec 11, 2024" },
-    { id: 3, name: "PQR University", location: "Kolkata", date: "Dec 12, 2024" },
-  ]);
+  /* API Integration State */
+  const [pendingColleges, setPendingColleges] = useState<any[]>([]);
+  const [pendingCompanies, setPendingCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [pendingCompanies, setPendingCompanies] = useState([
-    { id: 1, name: "InnoTech Solutions", industry: "IT Services", date: "Dec 9, 2024" },
-    { id: 2, name: "DataWave Analytics", industry: "Data Science", date: "Dec 10, 2024" },
-    { id: 3, name: "CloudFirst Systems", industry: "Cloud Computing", date: "Dec 11, 2024" },
-  ]);
+  // Fetch Logic
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [collegesRes, companiesRes] = await Promise.all([
+          fetch("http://localhost:8000/admin/pending-colleges"),
+          fetch("http://localhost:8000/admin/pending-companies")
+        ]);
 
-  const handleApproveCollege = (id: number) => {
-    setPendingColleges(pendingColleges.filter((c) => c.id !== id));
-    toast.success("College approved successfully!");
+        if (collegesRes.ok) {
+          const data = await collegesRes.json();
+          // Map to UI format if needed, or use directly
+          setPendingColleges(data.map((c: any) => ({
+            id: c._id,
+            name: c.collegeName,
+            location: c.location || "N/A",
+            email: c.email, // Needed for verification
+            date: "Pending" // We don't have date in DB yet
+          })));
+        }
+
+        if (companiesRes.ok) {
+          const data = await companiesRes.json();
+          setPendingCompanies(data.map((c: any) => ({
+            id: c._id,
+            name: c.companyName,
+            industry: c.industry || "N/A",
+            email: c.email,
+            date: "Pending"
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to fetch pending approvals", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleApproveCollege = async (email: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/admin/verify-college/${email}`, {
+        method: "POST"
+      });
+      if (response.ok) {
+        setPendingColleges(pendingColleges.filter((c) => c.email !== email));
+        toast.success(`College ${email} approved successfully!`);
+      } else {
+        toast.error("Failed to approve college");
+      }
+    } catch (e) {
+      toast.error("Error connecting to server");
+    }
   };
 
   const handleRejectCollege = (id: number) => {
-    setPendingColleges(pendingColleges.filter((c) => c.id !== id));
-    toast.info("College registration rejected");
+    // For MVP just remove from view or implement delete endpoint later
+    // setPendingColleges(pendingColleges.filter((c) => c.id !== id));
+    toast.info("Reject functionality not implemented in MVP");
   };
 
-  const handleApproveCompany = (id: number) => {
-    setPendingCompanies(pendingCompanies.filter((c) => c.id !== id));
-    toast.success("Company approved successfully!");
+  const handleApproveCompany = async (email: string) => {
+    try {
+      const response = await fetch(`http://localhost:8000/admin/verify-company/${email}`, {
+        method: "POST"
+      });
+      if (response.ok) {
+        setPendingCompanies(pendingCompanies.filter((c) => c.email !== email));
+        toast.success(`Company ${email} approved successfully!`);
+      } else {
+        toast.error("Failed to approve company");
+      }
+    } catch (e) {
+      toast.error("Error connecting to server");
+    }
   };
 
   const handleRejectCompany = (id: number) => {
-    setPendingCompanies(pendingCompanies.filter((c) => c.id !== id));
-    toast.info("Company registration rejected");
+    toast.info("Reject functionality not implemented in MVP");
   };
 
   return (
@@ -154,7 +211,7 @@ const AdminDashboard = () => {
                         size="sm"
                         variant="ghost"
                         className="text-sage hover:text-forest-medium hover:bg-sage/20"
-                        onClick={() => handleApproveCollege(college.id)}
+                        onClick={() => handleApproveCollege(college.email)}
                       >
                         <CheckCircle size={18} />
                       </Button>
@@ -211,7 +268,7 @@ const AdminDashboard = () => {
                         size="sm"
                         variant="ghost"
                         className="text-sage hover:text-forest-medium hover:bg-sage/20"
-                        onClick={() => handleApproveCompany(company.id)}
+                        onClick={() => handleApproveCompany(company.email)}
                       >
                         <CheckCircle size={18} />
                       </Button>

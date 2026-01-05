@@ -26,29 +26,81 @@ const StudentAuthPage = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (mode === "signup") {
-      if (formData.password !== formData.confirmPassword) {
-        toast({
-          title: "Passwords don't match",
-          description: "Please make sure your passwords match.",
-          variant: "destructive",
-        });
-        return;
+    if (mode === "signup" && formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const endpoint = mode === "login"
+        ? "http://localhost:8000/student/login"
+        : "http://localhost:8000/student/register";
+
+      const payload = mode === "login"
+        ? { email: formData.email, password: formData.password }
+        : {
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName
+        };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || (mode === "login" ? "Login failed" : "Authentication failed"));
       }
+
+      // Store token
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("userRole", "student");
+      localStorage.setItem("userEmail", formData.email); // Use formData.email as loginEmail
+
+      if (mode === "login") {
+        // Check Verification Status
+        // We can decode the token here or assume specific logic
+        // For MVP, we'll try to decode the JWT payload roughly
+        try {
+          const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+          if (payload.isVerified === false) {
+            navigate("/student/approval-pending");
+            return;
+          }
+        } catch (e) {
+          console.error("Token decode error", e);
+        }
+
+        toast({
+          title: "Welcome back!",
+          description: "Successfully logged in"
+        });
+        navigate("/student/dashboard");
+      } else { // mode === "signup"
+        toast({
+          title: "Account created successfully!",
+          description: "Redirecting...",
+        });
+        navigate("/student/onboarding");
+      }
+
+    } catch (error: any) {
       toast({
-        title: "Account created successfully!",
-        description: "Let's complete your profile.",
+        title: "Authentication Error",
+        description: error.message,
+        variant: "destructive",
       });
-      navigate("/student/onboarding");
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "Redirecting to dashboard...",
-      });
-      navigate("/student/dashboard");
     }
   };
 
@@ -83,21 +135,19 @@ const StudentAuthPage = () => {
         <div className="flex bg-secondary/50 rounded-lg p-1 mb-8">
           <button
             onClick={() => setMode("login")}
-            className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
-              mode === "login"
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${mode === "login"
+              ? "bg-background shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Login
           </button>
           <button
             onClick={() => setMode("signup")}
-            className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
-              mode === "signup"
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${mode === "signup"
+              ? "bg-background shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             Sign Up
           </button>
