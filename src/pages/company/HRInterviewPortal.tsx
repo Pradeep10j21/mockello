@@ -22,8 +22,9 @@ const HRInterviewPortal = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Role Determination
-    const role = location.state?.role || 'candidate';
+    // Role Determination (supports location.state or ?role=interviewer)
+    const urlParams = new URLSearchParams(location.search);
+    const role = location.state?.role || urlParams.get('role') || 'candidate';
     const isInterviewer = role === 'interviewer';
 
     // State
