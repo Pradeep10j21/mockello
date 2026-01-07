@@ -1,8 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from backend.routers import student, college, company, admin
 
-app = FastAPI(title="Mockello MVP Backend")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("[Backend] Starting up...")
+    try:
+        from backend.database import get_database
+        db = get_database()
+        db.client.admin.command('ping')
+        print("[Backend] MongoDB connection successful!")
+    except Exception as e:
+        print(f"[Backend] MongoDB connection failed: {e}")
+    yield
+    # Shutdown
+    print("[Backend] Shutting down...")
+
+app = FastAPI(title="Mockello MVP Backend", lifespan=lifespan)
 
 # CORS Middleware
 origins = [
