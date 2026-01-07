@@ -540,31 +540,31 @@ const HRInterviewPortal = () => {
     ];
 
     return (
-        <div className="h-screen bg-white text-slate-800 flex flex-col overflow-hidden font-sans">
+        <div className="h-screen bg-[#f4fbf7] text-slate-800 flex flex-col overflow-hidden font-sans">
             {/* Header */}
-            <header className="h-16 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
+            <header className="h-16 bg-gradient-to-r from-[#e9f6ef] to-[#f6fbf8] border-b border-[#e0f0e6] flex items-center justify-between px-8 shadow-sm z-10">
                 <div className="flex items-center gap-6 flex-1">
                     <div>
-                        <h1 className="text-lg font-bold text-slate-900">HR Interview Panel</h1>
-                        <p className="text-xs text-slate-500 mt-0.5">Siddharth J. Srivastava | Software Engineer | resume-1052-04.647407.mp4</p>
+                        <h1 className="text-lg font-bold text-[#14442f]">HR Interview Panel</h1>
+                        <p className="text-xs text-[#3b6b55] mt-0.5">Siddharth J. Srivastava | Software Engineer | resume-1052-04.647407.mp4</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                        <span className="text-xs font-semibold text-slate-700">LIVE</span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                        <span className="text-xs font-semibold text-[#18543d]">LIVE</span>
                     </div>
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">Connection: Stable</span>
-                    <span className="text-xs font-mono font-bold text-slate-600">{elapsedTime}</span>
-                    <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg" onClick={() => !interviewStartTime && setInterviewStartTime(new Date())}>Start Interview</Button>
-                    <Button size="sm" variant="ghost" className="text-slate-600 hover:bg-slate-100">Debug</Button>
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/60 text-[#18543d] border border-[#d9efe0]">Connection: Stable</span>
+                    <span className="text-xs font-mono font-bold text-[#145032]">{elapsedTime}</span>
+                    <Button size="sm" className="bg-[#15543b] hover:bg-[#11412d] text-white font-semibold rounded-lg" onClick={() => !interviewStartTime && setInterviewStartTime(new Date())}>Start Interview</Button>
+                    <Button size="sm" variant="ghost" className="text-[#145032] hover:bg-white/50">Debug</Button>
                 </div>
             </header>
 
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
                 {/* Left Sidebar - Resume */}
-                <div className="w-72 bg-white border-r border-slate-200 p-6 flex flex-col gap-4 overflow-y-auto">
+                <div className="w-80 bg-[#eaf6ef] border-r border-[#d6efe0] p-6 flex flex-col gap-4 overflow-y-auto rounded-tr-2xl rounded-br-2xl">
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="font-bold text-sm text-slate-900">Resume</h2>
@@ -572,7 +572,7 @@ const HRInterviewPortal = () => {
                         </div>
                         <Button size="sm" variant="outline" className="w-full text-xs">Download</Button>
                     </div>
-                    <div className="flex-1 bg-slate-100 rounded-xl p-4 border border-slate-200 flex items-center justify-center min-h-[300px]">
+                    <div className="flex-1 bg-white rounded-xl p-4 border border-[#e6efe9] flex items-center justify-center min-h-[300px] shadow-sm">
                         <div className="text-center">
                             <div className="space-y-2">
                                 <div className="h-3 bg-slate-300 rounded w-24 mx-auto"></div>
@@ -582,13 +582,13 @@ const HRInterviewPortal = () => {
                             <p className="text-xs text-slate-400 mt-4">Resume preview (PDF)</p>
                         </div>
                     </div>
-                    <div className="text-xs text-slate-500 font-semibold">Page 2 (preview)</div>
-                    <div className="h-32 bg-slate-50 rounded-xl border border-slate-200"></div>
+                    <div className="text-xs text-[#436b55] font-semibold">Page 2 (preview)</div>
+                    <div className="h-32 bg-white rounded-xl border border-[#e6efe9] shadow-sm"></div>
                 </div>
 
                 {/* Center - Video */}
-                <div className="flex-1 bg-slate-50 p-6 flex flex-col relative">
-                    <div className="flex-1 bg-white rounded-2xl border-2 border-slate-200 overflow-hidden relative flex items-center justify-center">
+                <div className="flex-1 bg-transparent p-6 flex flex-col relative">
+                    <div className="flex-1 bg-white rounded-3xl border-2 border-[#e6efe9] overflow-hidden relative flex items-center justify-center shadow-md">
                         {!isConnected ? (
                             <div className="flex flex-col items-center gap-3 text-slate-400">
                                 <RefreshCw className="w-10 h-10 animate-spin opacity-50" />
@@ -597,8 +597,8 @@ const HRInterviewPortal = () => {
                         ) : (
                             <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
                         )}
-                        <div className="absolute top-4 left-4 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Stable</div>
-                        <div className="absolute bottom-4 right-4 text-xs text-slate-500 font-semibold">Camera: Off</div>
+                        <div className="absolute top-4 left-4 px-3 py-1 bg-[#eaf6ef] text-[#145032] rounded-full text-xs font-semibold border border-[#d6efe0]">Stable</div>
+                        <div className="absolute bottom-4 right-4 text-xs text-[#37624a] font-semibold">Camera: Off</div>
                     </div>
                     <div className="mt-4 flex items-center justify-center gap-3">
                         <Button variant="outline" size="icon" onClick={toggleMic} className={`w-10 h-10 rounded-lg ${!isMicOn ? 'bg-red-500 text-white border-red-500' : ''}`}>
@@ -611,16 +611,16 @@ const HRInterviewPortal = () => {
                             <Video size={18} />
                         </Button>
                     </div>
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-48 h-32 bg-slate-200 rounded-lg border-2 border-slate-300 flex items-center justify-center text-xs text-slate-500 font-semibold overflow-hidden">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-48 h-32 bg-white rounded-lg border-2 border-[#e6efe9] flex items-center justify-center text-xs text-[#37624a] font-semibold overflow-hidden shadow-sm">
                         <video ref={myVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                         <div className="absolute bottom-2 right-2 bg-white px-2 py-1 rounded text-xs font-semibold text-slate-700">You</div>
                     </div>
                 </div>
 
                 {/* Right Sidebar - Guide & Notes */}
-                <div className="w-80 bg-white border-l border-slate-200 flex flex-col p-6 gap-6 overflow-y-auto">
+                <div className="w-72 bg-[#eaf6ef] border-l border-[#d6efe0] flex flex-col p-6 gap-6 overflow-y-auto rounded-tl-2xl rounded-bl-2xl">
                     {/* Interview Guide */}
-                    <div className="border border-slate-200 rounded-xl p-4">
+                    <div className="border border-[#e6efe9] rounded-xl p-4 bg-white/30">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="font-bold text-sm text-slate-900">HR Interview Guide</h3>
                             <Button size="sm" variant="ghost" className="text-xs h-6 px-2" onClick={() => setGuideCollapsed(!guideCollapsed)}>
@@ -645,7 +645,7 @@ const HRInterviewPortal = () => {
                         <Textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            className="flex-1 resize-none border border-slate-200 rounded-lg p-3 text-xs leading-relaxed focus:border-emerald-500 focus:outline-none"
+                            className="flex-1 resize-none border border-[#e6efe9] rounded-lg p-3 text-xs leading-relaxed focus:border-[#15543b] focus:outline-none bg-white"
                             placeholder="Capture answers, behavior, confidence, communication quality, and observations..."
                         />
                     </div>
@@ -653,13 +653,13 @@ const HRInterviewPortal = () => {
             </div>
 
             {/* Bottom Bar */}
-            <div className="h-16 bg-white border-t border-slate-200 flex items-center justify-between px-8">
+            <div className="h-16 bg-transparent border-t border-[#e0f0e6] flex items-center justify-between px-8">
                 <div className="flex items-center gap-4">
-                    <span className="text-sm font-mono font-bold text-slate-600">{elapsedTime}</span>
-                    <Button variant="outline" className="text-sm font-semibold rounded-lg">Mark Interview Completed</Button>
+                    <span className="text-sm font-mono font-bold text-[#145032]">{elapsedTime}</span>
+                    <Button variant="outline" className="text-sm font-semibold rounded-lg border-[#d7efe0] bg-white">Mark Interview Completed</Button>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="text-sm font-semibold rounded-lg">Proceed to Next Round</Button>
+                    <Button className="text-sm font-semibold rounded-lg bg-[#15543b] hover:bg-[#11412d] text-white">Proceed to Next Round</Button>
                 </div>
             </div>
         </div>
