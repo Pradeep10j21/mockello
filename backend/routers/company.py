@@ -88,3 +88,26 @@ def get_company_profile(email: str):
         
     company["_id"] = str(company["_id"])
     return company
+
+# --- Interview Result Endpoints ---
+from backend.models import InterviewResultCreate, InterviewResultResponse
+
+@router.post("/interview-result", response_model=dict)
+def save_interview_result(result: InterviewResultCreate):
+    db = get_database()
+    result_dict = result.dict()
+    
+    # Insert into database
+    db_result = db.interview_results.insert_one(result_dict)
+    
+    return {"message": "Interview result saved successfully", "id": str(db_result.inserted_id)}
+
+@router.get("/interview-results/{email}", response_model=list[InterviewResultResponse])
+def get_company_interview_results(email: str):
+    db = get_database()
+    results = list(db.interview_results.find({"company_email": email}).sort("timestamp", -1))
+    
+    for r in results:
+        r["_id"] = str(r["_id"])
+        
+    return results

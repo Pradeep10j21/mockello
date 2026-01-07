@@ -14,13 +14,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { TranscriptMessage, Participant, GDResult } from '@/types/gd';
+import type { TranscriptMessage, Participant, GDResult as GDResultType } from '@/types/gd';
 
 // Simulated AI analysis for "You"
-const generateYourResult = (transcript: TranscriptMessage[]): GDResult => {
+const generateYourResult = (transcript: TranscriptMessage[]): GDResultType => {
   const yourMessages = transcript.filter((m) => m.isYou);
   const messageCount = yourMessages.length;
-  
+
   // Calculate scores based on participation (with minimum base scores)
   const baseParticipation = messageCount > 0 ? Math.min(10, 5 + (messageCount / 3) * 5) : 6.5;
   const relevance = 7.8 + Math.random() * 1.5;
@@ -28,7 +28,7 @@ const generateYourResult = (transcript: TranscriptMessage[]): GDResult => {
   const confidence = 7.2 + Math.random() * 2.3;
   const logicalFlow = 7.6 + Math.random() * 1.8;
   const participation = baseParticipation + Math.random() * 1.5;
-  
+
   const overallScore = ((participation + relevance + communication + confidence + logicalFlow) / 5);
 
   return {
@@ -271,11 +271,11 @@ export default function GDResult() {
           className="text-center pt-4"
         >
           <Button
-            onClick={() => navigate('/interview')}
+            onClick={() => navigate('/hr-portal?role=candidate&session=final_test')}
             size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 px-8"
+            className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 rounded-xl shadow-lg border-0"
           >
-            Proceed to next round
+            Proceed to Personal Interview
           </Button>
         </motion.div>
       </div>

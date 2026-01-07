@@ -1,15 +1,21 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useSpeechToText } from '../../hooks/interview/useSpeechToText';
 import './VideoInterview.css';
+import Peer from 'peerjs';
 
-function VideoInterview({ isActive, onStart, onStop, onTranscriptUpdate, onAnswerComplete, canProceed }) {
+function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpdate, onAnswerComplete, canProceed }) {
   const [stream, setStream] = useState(null);
   const [timer, setTimer] = useState(0);
   const [silenceTimer, setSilenceTimer] = useState(0);
   const videoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const peerRef = useRef(null);
+  const currentCallRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const silenceIntervalRef = useRef(null);
   const lastTranscriptLengthRef = useRef(0);
+  const joinPollRef = useRef(null);
+  const joinedRef = useRef(false);
 
   const {
     transcript,
@@ -103,6 +109,122 @@ function VideoInterview({ isActive, onStart, onStop, onTranscriptUpdate, onAnswe
     }
   };
 
+  // Initialize PeerJS when component mounts
+  useEffect(() => {
+    try {
+      const peer = new Peer();
+      peerRef.current = peer;
+
+      peer.on('open', (id) => {
+        console.log('Peer open with id', id);
+      });
+
+      // When another peer calls us, answer with our stream and play their stream
+      peer.on('call', async (call) => {
+        console.log('Incoming call', call);
+        // Ensure we have camera ready
+        try {
+          if (!stream) {
+            await startCamera();
+          }
+          call.answer(stream);
+        } catch (err) {
+          console.error('Failed to answer call', err);
+        }
+
+        call.on('stream', (remoteStream) => {
+          currentCallRef.current = call;
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+          }
+        });
+      });
+
+      peer.on('error', (err) => {
+        console.warn('Peer error', err);
+      });
+    } catch (e) {
+      console.warn('PeerJS init failed', e);
+    }
+
+    return () => {
+      if (peerRef.current) {
+        try { peerRef.current.destroy(); } catch(e){}
+        peerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Helper to call a remote peer id
+  const callRemotePeer = async (remoteId) => {
+    if (!peerRef.current) {
+      alert('Peer not initialized');
+      return;
+    }
+    try {
+      if (!stream) {
+        await startCamera();
+      }
+      const call = peerRef.current.call(remoteId, stream);
+      currentCallRef.current = call;
+      call.on('stream', (remoteStream) => {
+        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+      });
+      call.on('close', () => {
+        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+      });
+    } catch (err) {
+      console.error('Error calling remote peer', err);
+      alert('Failed to call remote peer: ' + (err.message || err));
+    }
+  };
+
+  const registerToRoom = async () => {
+    try {
+      const peer = peerRef.current;
+      if (!peer || !peer.id) {
+        console.log('Peer id not ready yet');
+        return;
+      }
+      if (!companyId) {
+        console.log('No companyId provided, skipping room join');
+        return;
+      }
+
+      const res = await fetch('http://localhost:8000/interview/room/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId, peerId: peer.id })
+      });
+      const data = await res.json();
+      const others = data.peers || [];
+      if (others.length > 0) {
+        // call first available peer
+        callRemotePeer(others[0].peerId);
+        joinedRef.current = true;
+      } else {
+        // start polling for other peers
+        if (joinPollRef.current) clearInterval(joinPollRef.current);
+        joinPollRef.current = setInterval(async () => {
+          try {
+            const r = await fetch(`http://localhost:8000/interview/room/${companyId}/peers`);
+            const j = await r.json();
+            const peers = j.peers || [];
+            const other = peers.find(p => p.peerId !== peer.id);
+            if (other) {
+              callRemotePeer(other.peerId);
+              joinedRef.current = true;
+              clearInterval(joinPollRef.current);
+              joinPollRef.current = null;
+            }
+          } catch (e) { console.warn('poll error', e); }
+        }, 2000);
+      }
+    } catch (e) {
+      console.warn('Failed to register to room', e);
+    }
+  };
+
   const stopCamera = () => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -145,6 +267,14 @@ function VideoInterview({ isActive, onStart, onStop, onTranscriptUpdate, onAnswe
       setTimeout(() => {
         startListening();
       }, 100);
+      // attach local stream to peer if peer exists
+      if (peerRef.current && stream) {
+        // nothing to do: PeerJS uses getUserMedia streams when calling/answering
+      }
+      // register to room so other peer can be discovered and auto-called
+      setTimeout(() => {
+        registerToRoom();
+      }, 200);
     } catch (error) {
       console.error('Error starting interview:', error);
       if (error.name === 'NotAllowedError') {
@@ -170,6 +300,15 @@ function VideoInterview({ isActive, onStart, onStop, onTranscriptUpdate, onAnswe
     setSilenceTimer(0);
     lastTranscriptLengthRef.current = 0;
     resetTranscript();
+    // close any active call
+    try {
+      if (currentCallRef.current) {
+        currentCallRef.current.close();
+        currentCallRef.current = null;
+      }
+    } catch (e) { }
+    // clear join poll
+    try { if (joinPollRef.current) clearInterval(joinPollRef.current); } catch(e){}
   };
 
   useEffect(() => {
@@ -217,6 +356,12 @@ function VideoInterview({ isActive, onStart, onStop, onTranscriptUpdate, onAnswe
           playsInline
           muted
           className="video-preview"
+        />
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className="video-remote"
         />
         {!stream && (
           <div className="video-placeholder">
@@ -270,6 +415,9 @@ function VideoInterview({ isActive, onStart, onStop, onTranscriptUpdate, onAnswe
           placeholder="Your speech will appear here... Speak clearly and naturally."
           autoFocus={false}
         />
+        <div style={{marginTop:12}}>
+          <PeerControls peerRef={peerRef} onCall={callRemotePeer} />
+        </div>
         {isActive && transcript.trim().length > 0 && (
           <div className="transcript-footer">
             <div className="transcript-footer-left">
@@ -293,4 +441,50 @@ function VideoInterview({ isActive, onStart, onStop, onTranscriptUpdate, onAnswe
 }
 
 export default VideoInterview;
+
+// Small inline component for peer ID display and connect field
+function PeerControls({ peerRef, onCall }) {
+  const [remoteId, setRemoteId] = useState('');
+  const [myId, setMyId] = useState('');
+
+  useEffect(() => {
+    const peer = peerRef.current;
+    if (!peer) return;
+    const handleOpen = (id) => setMyId(id);
+    if (peer.id) setMyId(peer.id);
+    peer.on('open', handleOpen);
+    return () => {
+      try { peer.off('open', handleOpen); } catch(e){}
+    };
+  }, [peerRef]);
+
+  const handleCopy = () => {
+    if (myId) navigator.clipboard?.writeText(myId);
+  };
+
+  const handleConnect = () => {
+    if (!remoteId) return alert('Enter remote peer id');
+    onCall(remoteId.trim());
+  };
+
+  return (
+    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+      <div style={{flex:1}}>
+        <div style={{fontSize:12,color:'#666'}}>Your Peer ID</div>
+        <div style={{display:'flex',gap:8,marginTop:6}}>
+          <input readOnly value={myId || ''} style={{flex:1,padding:8}} />
+          <button onClick={handleCopy} style={{padding:'8px 12px'}}>Copy</button>
+        </div>
+      </div>
+
+      <div style={{flex:1}}>
+        <div style={{fontSize:12,color:'#666'}}>Connect to Peer ID</div>
+        <div style={{display:'flex',gap:8,marginTop:6}}>
+          <input value={remoteId} onChange={(e)=>setRemoteId(e.target.value)} placeholder="remote peer id" style={{flex:1,padding:8}} />
+          <button onClick={handleConnect} style={{padding:'8px 12px'}}>Call</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 

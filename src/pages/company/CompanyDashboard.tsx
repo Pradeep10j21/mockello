@@ -119,7 +119,7 @@ const CompanyDashboard = () => {
             Welcome{isNew ? "" : " back"}, {companyName}!
           </h1>
           <p className="text-muted-foreground">
-            {isNew 
+            {isNew
               ? "Your company profile is ready. Start by posting jobs and connecting with colleges."
               : "Here's what's happening with your recruitment today."}
           </p>
@@ -148,13 +148,12 @@ const CompanyDashboard = () => {
                         <TrendingDown className="w-4 h-4 text-destructive" />
                       )}
                       <span
-                        className={`text-xs ${
-                          stat.trend === "up"
-                            ? "text-forest-medium"
-                            : stat.trend === "down"
+                        className={`text-xs ${stat.trend === "up"
+                          ? "text-forest-medium"
+                          : stat.trend === "down"
                             ? "text-destructive"
                             : "text-muted-foreground"
-                        }`}
+                          }`}
                       >
                         {stat.change}
                       </span>
@@ -208,13 +207,12 @@ const CompanyDashboard = () => {
                   {recentActivity.map((activity, index) => (
                     <div key={index} className="flex gap-3">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          activity.type === "success"
-                            ? "bg-forest-light/20 text-forest-medium"
-                            : activity.type === "warning"
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === "success"
+                          ? "bg-forest-light/20 text-forest-medium"
+                          : activity.type === "warning"
                             ? "bg-gold/20 text-gold"
                             : "bg-muted text-muted-foreground"
-                        }`}
+                          }`}
                       >
                         <activity.icon className="w-4 h-4" />
                       </div>
@@ -240,15 +238,25 @@ const CompanyDashboard = () => {
             <CardTitle className="font-display">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button 
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <button
+                onClick={() => {
+                  const sid = 'session-' + Math.floor(1000 + Math.random() * 9000);
+                  navigate(`/hr-portal?session=${sid}&role=interviewer`);
+                }}
+                className="p-4 rounded-xl bg-forest-medium/10 hover:bg-forest-medium/20 transition-colors text-center group border border-forest-medium/30"
+              >
+                <Users className="w-6 h-6 mx-auto mb-2 text-forest-medium group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium text-foreground">Conduct Interview</span>
+              </button>
+              <button
                 onClick={() => navigate("/company/job-criteria")}
                 className="p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-center group"
               >
                 <Briefcase className="w-6 h-6 mx-auto mb-2 text-forest-medium group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium text-foreground">Post New Job</span>
               </button>
-              <button 
+              <button
                 onClick={() => navigate("/company/colleges")}
                 className="p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-center group"
               >
@@ -259,7 +267,7 @@ const CompanyDashboard = () => {
                 <Users className="w-6 h-6 mx-auto mb-2 text-forest-medium group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium text-foreground">View Candidates</span>
               </button>
-              <button 
+              <button
                 onClick={() => navigate("/company/updates")}
                 className="p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-center group"
               >

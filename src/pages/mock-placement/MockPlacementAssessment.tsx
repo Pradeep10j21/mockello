@@ -1,35 +1,75 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Clock, CheckCircle, Lightbulb, Brain, Sparkles, RefreshCw, Trophy } from 'lucide-react';
+import { ArrowRight, Clock, CheckCircle, Sparkles, Trophy, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { questions, getCategoryLabel, getDifficultyColor } from '@/data/questions';
-import { AssessmentPhase, FeedbackState, UserAnswer } from '@/types/assessment';
-import LearningMode from '@/components/assessment/LearningMode';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AssessmentPhase, UserAnswer } from '@/types/assessment';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
+// Define Question Interface as it comes from API
+interface Question {
+  _id: string;
+  id: string;
+  category: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+}
 
 const MockPlacementAssessment = () => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<AssessmentPhase>('welcome');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [feedbackState, setFeedbackState] = useState<FeedbackState>('none');
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
-  const [seconds, setSeconds] = useState(0);
+  const [seconds, setSeconds] = useState(1800); // 30 minutes
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
   const [showTabWarning, setShowTabWarning] = useState(false);
+
+  // Fetch questions from API
+  const fetchQuestions = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/aptitude/test');
+      if (!response.ok) throw new Error('Failed to fetch questions');
+      const data = await response.json();
+      setQuestions(data);
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      // Fallback or error handling could go here
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
 
   // Tab switch warning
   useEffect(() => {
     if (phase !== 'assessment') return;
 
+    const handleTabSwitch = () => {
+      setTabSwitchCount(prev => {
+        const newCount = prev + 1;
+        if (newCount > 5) {
+          alert("Violated tab switch limit (5 times). The test will now restart.");
+          window.location.reload();
+          return newCount;
+        }
+        setShowTabWarning(true);
+        return newCount;
+      });
+    };
+
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setShowTabWarning(true);
+        handleTabSwitch();
       }
     };
 
     const handleBlur = () => {
-      setShowTabWarning(true);
+      handleTabSwitch();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -41,11 +81,17 @@ const MockPlacementAssessment = () => {
     };
   }, [phase]);
 
-  const currentQuestion = questions[currentQuestionIndex];
-
   const startTimer = () => {
     if (timerId) return;
-    const id = setInterval(() => setSeconds(s => s + 1), 1000);
+    const id = setInterval(() => {
+      setSeconds(s => {
+        if (s <= 1) {
+          handleSubmitAssessment();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
     setTimerId(id);
   };
 
@@ -56,78 +102,71 @@ const MockPlacementAssessment = () => {
     }
   };
 
-  const handleStartAssessment = () => {
+  const handleStartAssessment = async () => {
+    await fetchQuestions();
     setPhase('assessment');
     startTimer();
   };
 
   const handleSelectAnswer = (index: number) => {
-    if (feedbackState !== 'none') return;
     setSelectedAnswer(index);
+    // Save answer immediately or update local state
+    setUserAnswers(prev => {
+      const existing = prev.filter(a => a.questionId !== currentQuestion.id);
+      const isCorrect = index === currentQuestion.correctAnswer;
+      return [...existing, {
+        questionId: currentQuestion.id,
+        selectedAnswer: index,
+        isCorrect: isCorrect, // We can calculate this locally for now since we have the data
+        timeSpent: 0,
+        attempts: 1,
+        learningRecovery: false
+      }];
+    });
   };
 
-  const handleCheckAnswer = () => {
-    if (selectedAnswer === null) return;
-    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
-    
-    setUserAnswers(prev => [...prev, {
-      questionId: currentQuestion.id,
-      selectedAnswer,
-      isCorrect,
-      timeSpent: 0,
-      attempts: 1,
-      learningRecovery: false,
-    }]);
-    
-    setFeedbackState(isCorrect ? 'correct' : 'incorrect');
-    if (!isCorrect) {
-      stopTimer();
-    }
-  };
-
-  const handleContinue = () => {
-    startTimer();
-    if (currentQuestionIndex + 1 >= questions.length) {
-      stopTimer();
-      // Navigate to results page with assessment data
-      const result = {
-        accuracy,
-        totalQuestions: questions.length,
-        correctAnswers,
-        timeSpent: seconds,
-        categoryBreakdown: questions.reduce((acc, q, idx) => {
-          const category = q.category;
-          const isCorrect = userAnswers.find(a => a.questionId === q.id)?.isCorrect || false;
-          if (!acc[category]) acc[category] = { correct: 0, total: 0 };
-          acc[category].total++;
-          if (isCorrect) acc[category].correct++;
-          return acc;
-        }, {} as { [key: string]: { correct: number; total: number } }),
-        difficultyBreakdown: questions.reduce((acc, q, idx) => {
-          const difficulty = q.difficulty;
-          const isCorrect = userAnswers.find(a => a.questionId === q.id)?.isCorrect || false;
-          if (!acc[difficulty]) acc[difficulty] = { correct: 0, total: 0 };
-          acc[difficulty].total++;
-          if (isCorrect) acc[difficulty].correct++;
-          return acc;
-        }, {} as { [key: string]: { correct: number; total: number } })
-      };
-      navigate('/mock-placement/results', { state: { result } });
-    } else {
+  const handleNext = () => {
+    if (currentQuestionIndex + 1 < questions.length) {
       setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswer(null);
-      setFeedbackState('none');
+      // Restore previous answer if exists
+      const prevAnswer = userAnswers.find(a => a.questionId === questions[currentQuestionIndex + 1].id);
+      setSelectedAnswer(prevAnswer ? prevAnswer.selectedAnswer : null);
     }
   };
 
-  const handleRetake = () => {
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+      // Restore previous answer if exists
+      const prevAnswer = userAnswers.find(a => a.questionId === questions[currentQuestionIndex - 1].id);
+      setSelectedAnswer(prevAnswer ? prevAnswer.selectedAnswer : null);
+    }
+  }
+
+  const handleSubmitAssessment = () => {
     stopTimer();
-    setPhase('welcome');
-    setCurrentQuestionIndex(0);
-    setSelectedAnswer(null);
-    setFeedbackState('none');
-    setUserAnswers([]);
-    setSeconds(0);
+
+    // Calculate results
+    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+    const accuracy = questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0;
+
+    const result = {
+      accuracy,
+      totalQuestions: questions.length,
+      correctAnswers,
+      timeSpent: 1800 - seconds,
+      categoryBreakdown: questions.reduce((acc, q) => {
+        const category = q.category;
+        const isCorrect = userAnswers.find(a => a.questionId === q.id)?.isCorrect || false;
+        if (!acc[category]) acc[category] = { correct: 0, total: 0 };
+        acc[category].total++;
+        if (isCorrect) acc[category].correct++;
+        return acc;
+      }, {} as { [key: string]: { correct: number; total: number } }),
+      difficultyBreakdown: {} // simplified for now as we might not have difficulty in all generated questions
+    };
+
+    navigate('/mock-placement/results', { state: { result } });
   };
 
   const formatTime = (totalSeconds: number) => {
@@ -136,8 +175,7 @@ const MockPlacementAssessment = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
-  const accuracy = questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0;
+  const currentQuestion = questions[currentQuestionIndex];
 
   if (phase === 'welcome') {
     return (
@@ -150,13 +188,14 @@ const MockPlacementAssessment = () => {
             Aptitude Assessment
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            A learning-first assessment experience. Make mistakes, understand concepts, and showcase your potential.
+            30 Questions • 30 Minutes • No Immediate Feedback
           </p>
-          <Button size="lg" className="btn-forest" onClick={handleStartAssessment}>
+          <Button size="lg" className="btn-forest" onClick={handleStartAssessment} disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Start Assessment <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
           <p className="mt-4 text-sm text-muted-foreground flex items-center justify-center gap-2">
-            <Clock className="w-4 h-4" /> {questions.length} questions • ~10 minutes
+            <Clock className="w-4 h-4" /> 30 random questions from our pool
           </p>
           <Link to="/mock-placement" className="mt-6 inline-block text-sm text-primary hover:underline">
             ← Back to Overview
@@ -166,40 +205,7 @@ const MockPlacementAssessment = () => {
     );
   }
 
-  if (phase === 'summary') {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-        <div className="max-w-lg w-full text-center">
-          <div className="w-24 h-24 rounded-2xl bg-accent mx-auto mb-6 flex items-center justify-center">
-            <Trophy className="w-12 h-12 text-accent-foreground" />
-          </div>
-          <h1 className="text-4xl font-bold font-serif mb-2">Assessment Complete!</h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            {accuracy >= 75 ? '🎉 Great Job!' : accuracy >= 50 ? '👍 Good Progress!' : '📚 Keep Practicing!'}
-          </p>
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="card-forest p-6">
-              <p className="text-sm text-muted-foreground">Accuracy</p>
-              <p className="text-4xl font-bold text-primary">{accuracy}%</p>
-              <p className="text-sm text-muted-foreground">{correctAnswers}/{questions.length} correct</p>
-            </div>
-            <div className="card-forest p-6">
-              <p className="text-sm text-muted-foreground">Time Spent</p>
-              <p className="text-4xl font-bold text-secondary">{formatTime(seconds)}</p>
-            </div>
-          </div>
-          <div className="flex gap-4 justify-center">
-            <Button onClick={handleRetake} className="btn-forest">
-              <RefreshCw className="mr-2 w-4 h-4" /> Retake
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/student/dashboard">Back to Dashboard</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!currentQuestion) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>;
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
@@ -208,7 +214,7 @@ const MockPlacementAssessment = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Warning: Tab Switch Detected</AlertDialogTitle>
             <AlertDialogDescription>
-              You have switched tabs or minimized the window. Please stay on this page during the assessment. 
+              You have switched tabs or minimized the window. Please stay on this page during the assessment.
               Multiple tab switches may result in disqualification.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -223,8 +229,8 @@ const MockPlacementAssessment = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-semibold">Aptitude Assessment</h1>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50">
-            <Clock className="w-4 h-4 text-muted-foreground" />
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${seconds < 300 ? 'bg-destructive/10 border-destructive text-destructive' : 'bg-muted/50 border-border'}`}>
+            <Clock className="w-4 h-4" />
             <span className="font-mono text-sm">{formatTime(seconds)}</span>
           </div>
         </div>
@@ -243,73 +249,51 @@ const MockPlacementAssessment = () => {
         {/* Question */}
         <div className="card-forest p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              {getCategoryLabel(currentQuestion.category)}
-            </span>
-            <span className={`px-3 py-1 rounded-full bg-muted text-sm font-medium capitalize ${getDifficultyColor(currentQuestion.difficulty)}`}>
-              {currentQuestion.difficulty}
+            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium capitalize">
+              {currentQuestion.category}
             </span>
           </div>
           <h2 className="text-xl font-semibold mb-6">{currentQuestion.question}</h2>
 
           {/* Options */}
           <div className="space-y-3 mb-6">
-            {currentQuestion.options.map((option, index) => {
-              const isCorrect = index === currentQuestion.correctAnswer;
-              const showCorrect = feedbackState !== 'none' && isCorrect;
-              const showIncorrect = feedbackState === 'incorrect' && selectedAnswer === index;
-              
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleSelectAnswer(index)}
-                  disabled={feedbackState !== 'none'}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                    showCorrect ? 'border-secondary bg-secondary/10' :
-                    showIncorrect ? 'border-destructive bg-destructive/10' :
-                    selectedAnswer === index ? 'border-primary bg-primary/10' :
+            {currentQuestion.options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => handleSelectAnswer(index)}
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all ${selectedAnswer === index ? 'border-primary bg-primary/10' :
                     'border-border hover:border-primary/50'
                   }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-semibold ${
-                      showCorrect ? 'bg-secondary text-secondary-foreground' :
-                      showIncorrect ? 'bg-destructive text-destructive-foreground' :
-                      selectedAnswer === index ? 'bg-primary text-primary-foreground' :
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-semibold ${selectedAnswer === index ? 'bg-primary text-primary-foreground' :
                       'bg-muted text-muted-foreground'
                     }`}>
-                      {showCorrect ? <CheckCircle className="w-5 h-5" /> : ['A', 'B', 'C', 'D'][index]}
-                    </div>
-                    <span>{option}</span>
+                    {['A', 'B', 'C', 'D'][index]}
                   </div>
-                </button>
-              );
-            })}
+                  <span>{option}</span>
+                </div>
+              </button>
+            )
+            )}
           </div>
 
           {/* Actions */}
-          {feedbackState === 'none' ? (
-            <Button onClick={handleCheckAnswer} disabled={selectedAnswer === null} className="w-full btn-forest">
-              Check Answer
+          <div className="flex justify-between mt-8">
+            <Button onClick={handlePrevious} disabled={currentQuestionIndex === 0} variant="outline">
+              Previous
             </Button>
-          ) : feedbackState === 'correct' ? (
-            <div className="p-4 rounded-xl bg-secondary/10 border border-secondary">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-5 h-5 text-secondary" />
-                <span className="font-semibold text-secondary">Excellent!</span>
-              </div>
-              <p className="text-sm text-foreground mb-4">{currentQuestion.explanation}</p>
-              <Button onClick={handleContinue} className="w-full btn-forest">
-                Continue <ArrowRight className="ml-2 w-4 h-4" />
+
+            {currentQuestionIndex < questions.length - 1 ? (
+              <Button onClick={handleNext} className="btn-forest">
+                Next <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
-            </div>
-          ) : (
-            <LearningMode 
-              question={currentQuestion} 
-              selectedAnswer={selectedAnswer!} 
-              onContinue={handleContinue} 
-            />
-          )}
+            ) : (
+              <Button onClick={handleSubmitAssessment} className="btn-forest bg-green-600 hover:bg-green-700">
+                Submit Test <CheckCircle className="ml-2 w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -79,6 +79,7 @@ function InterviewPage() {
       <div className="interview-container">
         <div className="interview-left">
           <VideoInterview
+            companyId={companyId}
             isActive={isInterviewActive}
             onStart={startInterview}
             onStop={handleStopInterview}

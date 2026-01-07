@@ -8,7 +8,8 @@ import {
   Bell,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { icon: <LayoutDashboard className="w-5 h-5" />, label: "Dashboard", href: "/student/dashboard" },
+  { icon: <Sparkles className="w-5 h-5" />, label: "AI Interview", href: "/interview" },
   { icon: <Building2 className="w-5 h-5" />, label: "Eligible Companies", href: "/student/companies" },
   { icon: <FileText className="w-5 h-5" />, label: "My Applications", href: "/student/applications" },
   { icon: <User className="w-5 h-5" />, label: "My Profile", href: "/student/profile" },

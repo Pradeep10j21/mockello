@@ -163,3 +163,20 @@ class AdminResponse(AdminBase):
     
     class Config:
         populate_by_name = True
+
+# --- Interview Result Models ---
+class InterviewResultBase(BaseModel):
+    company_email: EmailStr
+    candidate_id: str  # Can be email or name for MVP
+    notes: Optional[str] = None
+    decision: str  # Strong Hire, Hire, Hold, Reject
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class InterviewResultCreate(InterviewResultBase):
+    pass
+
+class InterviewResultResponse(InterviewResultBase):
+    id: str = Field(..., alias="_id")
+
+    class Config:
+        populate_by_name = True

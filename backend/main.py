@@ -27,6 +27,14 @@ app.include_router(student.router)
 app.include_router(college.router)
 app.include_router(company.router)
 app.include_router(admin.router)
+from backend.routers import aptitude
+app.include_router(aptitude.router)
+from backend.routers import ai_interviewer
+app.include_router(ai_interviewer.router)
+from backend.routers import techprep
+app.include_router(techprep.router)
+from backend.routers import interview_room
+app.include_router(interview_room.router)
 
 @app.get("/")
 def read_root():

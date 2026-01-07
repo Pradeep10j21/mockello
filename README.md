@@ -47,7 +47,13 @@ The frontend provides the user interface for all four roles.
    ```bash
    npm install
    ```
-3. **Start the development server:**
+3. **Set up environment variables:**
+   Create a `.env` file in the root directory and add your OpenAI API key:
+   ```env
+   VITE_OPENAI_API_KEY=your_openai_api_key_here
+   ```
+   > **Note:** The HR Interview transcription feature uses OpenAI's Whisper API. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys).
+4. **Start the development server:**
    ```bash
    npm run dev
    ```

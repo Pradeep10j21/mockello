@@ -1,30 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  Trophy,
-  Target,
-  Clock,
-  TrendingUp,
-  Award,
-  BookOpen,
-  RefreshCw,
-  ArrowRight,
-  Star,
-  CheckCircle,
-  BarChart3,
-  Zap,
-  Brain,
-  Lightbulb,
-  Sparkles,
-  Leaf,
-  TreePine,
-  Mountain,
-  Sun
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+import {
+  Trophy, Home, Sparkles, Target, Zap,
+  ChevronRight, Share2, Download, CheckCircle, Lightbulb, TrendingUp, RefreshCw, Brain, BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AssessmentResult {
   accuracy: number;
@@ -38,330 +25,331 @@ interface AssessmentResult {
 const MockPlacementResults = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isVisible, setIsVisible] = useState(false);
-  const [animatedStats, setAnimatedStats] = useState({
-    accuracy: 0,
-    correctAnswers: 0,
-    timeSpent: 0
-  });
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [nextRoundClicks, setNextRoundClicks] = useState(0);
 
-  // Get results from location state or use default
+  // Mock data fallback or use passed state
   const result: AssessmentResult = location.state?.result || {
-    accuracy: 85,
-    totalQuestions: 20,
-    correctAnswers: 17,
-    timeSpent: 720, // 12 minutes
+    accuracy: 78,
+    totalQuestions: 30,
+    correctAnswers: 23,
+    timeSpent: 945,
     categoryBreakdown: {
-      'Logical Reasoning': { correct: 5, total: 6 },
-      'Quantitative Aptitude': { correct: 4, total: 5 },
-      'Verbal Ability': { correct: 4, total: 5 },
-      'Data Interpretation': { correct: 4, total: 4 }
+      'Quantitative': { correct: 8, total: 10 },
+      'Logical': { correct: 9, total: 10 },
+      'Verbal': { correct: 6, total: 10 }
     },
     difficultyBreakdown: {
-      'Easy': { correct: 8, total: 8 },
-      'Medium': { correct: 6, total: 8 },
-      'Hard': { correct: 3, total: 4 }
+      'Easy': { correct: 10, total: 10 },
+      'Medium': { correct: 10, total: 15 },
+      'Hard': { correct: 3, total: 5 }
     }
   };
 
   useEffect(() => {
-    setIsVisible(true);
+    if (result.accuracy > 70) setShowConfetti(true);
+  }, [result.accuracy]);
 
-    // Animate stats
-    const animateValue = (start: number, end: number, duration: number, setValue: (value: number) => void) => {
-      const startTime = Date.now();
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const currentValue = Math.floor(start + (end - start) * progress);
-        setValue(currentValue);
+  // Ensure result exists and has valid values
+  const safeResult = result || {
+    accuracy: 0,
+    totalQuestions: 0,
+    correctAnswers: 0,
+    timeSpent: 0,
+    categoryBreakdown: {},
+    difficultyBreakdown: {}
+  };
 
-        if (progress < 1) {
-          requestAnimationFrame(animate);
+  const hasData = safeResult.totalQuestions > 0;
+
+  // Transform data for charts
+  const radarData = hasData
+    ? Object.entries(safeResult.categoryBreakdown).map(([key, val]) => ({
+      subject: key,
+      A: val.total > 0 ? (val.correct / val.total) * 100 : 0,
+      fullMark: 100
+    }))
+    : [];
+
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return "0m 0s";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+  const getGrade = (acc: number) => {
+    const score = isNaN(acc) ? 0 : acc;
+    if (score >= 90) return { label: 'S', color: 'text-emerald-400', title: 'Legendary' }; // Lighter text for dark mode
+    if (score >= 80) return { label: 'A', color: 'text-emerald-300', title: 'Excellent' };
+    if (score >= 60) return { label: 'B', color: 'text-teal-300', title: 'Good' };
+    if (score >= 40) return { label: 'C', color: 'text-amber-300', title: 'Average' };
+    return { label: 'D', color: 'text-rose-400', title: 'Needs Work' };
+  };
+
+  const getRecommendations = (result: AssessmentResult) => {
+    const recs = [];
+    const { accuracy, categoryBreakdown } = result;
+
+    // Category specific advice
+    Object.entries(categoryBreakdown).forEach(([cat, stats]) => {
+      const catAccuracy = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+      if (catAccuracy < 60) {
+        if (cat.toLowerCase().includes('quant')) {
+          recs.push({ icon: Target, text: "Quantitative: Focus on 'Time & Work' and 'Averages' formulas. Practice basic arithmetic speed." });
+        } else if (cat.toLowerCase().includes('logic')) {
+          recs.push({ icon: Brain, text: "Logical: Dedicate time to 'Blood Relations' and 'Seating Arrangements'. Draw diagrams to solve faster." });
+        } else if (cat.toLowerCase().includes('verbal')) {
+          recs.push({ icon: BookOpen, text: "Verbal: Read daily editorials to improve comprehension. Work on subject-verb agreement rules." });
         }
-      };
-      animate();
-    };
+      }
+    });
 
-    setTimeout(() => {
-      animateValue(0, result.accuracy, 1500, (value) => setAnimatedStats(prev => ({ ...prev, accuracy: value })));
-      animateValue(0, result.correctAnswers, 1200, (value) => setAnimatedStats(prev => ({ ...prev, correctAnswers: value })));
-      animateValue(0, result.timeSpent, 1000, (value) => setAnimatedStats(prev => ({ ...prev, timeSpent: value })));
-    }, 500);
-  }, [result]);
+    // General advice if doing well
+    if (recs.length === 0) {
+      if (accuracy > 90) {
+        recs.push({ icon: Trophy, text: "Outstanding! You are ready for high-difficulty competitive exams. Try timed mock tests." });
+      } else {
+        recs.push({ icon: TrendingUp, text: "Good balance across topics. Focus on increasing your speed now." });
+      }
+    }
 
-  const formatTime = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    // Always fill up to 3 tips
+    if (recs.length < 3) {
+      if (accuracy < 70) recs.push({ icon: CheckCircle, text: "Review all incorrect answers to understand the underlying concepts." });
+      if (accuracy < 100) recs.push({ icon: Zap, text: "Practice utilizing option elimination strategies." });
+    }
+
+    return recs.slice(0, 3);
   };
 
-  const getPerformanceLevel = (accuracy: number) => {
-    if (accuracy >= 90) return { level: 'Exceptional', color: 'text-accent', icon: Trophy, description: 'Outstanding performance! You\'re ready for top-tier opportunities.' };
-    if (accuracy >= 80) return { level: 'Excellent', color: 'text-secondary', icon: Award, description: 'Great job! You demonstrate strong analytical skills.' };
-    if (accuracy >= 70) return { level: 'Good', color: 'text-primary', icon: Target, description: 'Solid performance with room for improvement.' };
-    if (accuracy >= 60) return { level: 'Fair', color: 'text-muted-foreground', icon: TrendingUp, description: 'Good foundation, focus on weak areas.' };
-    return { level: 'Needs Improvement', color: 'text-destructive', icon: BookOpen, description: 'Practice more to strengthen your skills.' };
-  };
+  const grade = getGrade(safeResult.accuracy);
+  const recommendations = getRecommendations(safeResult);
 
-  const performance = getPerformanceLevel(result.accuracy);
-  const PerformanceIcon = performance.icon;
-
-  const getRecommendations = (accuracy: number) => {
-    if (accuracy >= 90) {
-      return [
-        'Apply for leadership roles and technical positions',
-        'Consider advanced certifications',
-        'Mentor others in your areas of strength'
-      ];
-    } else if (accuracy >= 80) {
-      return [
-        'Focus on interview preparation for your target companies',
-        'Strengthen weak areas identified in the breakdown',
-        'Practice time management for longer assessments'
-      ];
-    } else if (accuracy >= 70) {
-      return [
-        'Review fundamental concepts in weak categories',
-        'Take more practice tests to build confidence',
-        'Focus on accuracy over speed initially'
-      ];
-    } else {
-      return [
-        'Dedicate time to daily practice sessions',
-        'Focus on understanding concepts rather than memorization',
-        'Seek guidance from mentors or online resources'
-      ];
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
     }
   };
 
-  const recommendations = getRecommendations(result.accuracy);
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 }
+  };
+
+  const primaryColor = "#CCDBD0"; // Green Light
+  const secondaryColor = "#0F2C1F"; // Green Primary (Background)
+
+  if (!result) {
+    return (
+      <div className="h-screen flex items-center justify-center font-sans" style={{ backgroundColor: secondaryColor, color: primaryColor }}>
+        <p>No results found. <Link to="/mock-placement/assessment" className="underline font-bold text-emerald-400">Take Assessment</Link></p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-canopy relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-10 animate-float">
-          <Leaf className="w-8 h-8 text-primary" />
-        </div>
-        <div className="absolute top-40 right-20 animate-float-delayed">
-          <TreePine className="w-12 h-12 text-secondary" />
-        </div>
-        <div className="absolute bottom-20 left-1/4 animate-sway">
-          <Mountain className="w-16 h-16 text-muted-foreground" />
-        </div>
-        <div className="absolute bottom-40 right-10 animate-pulse-soft">
-          <Sun className="w-10 h-10 text-accent" />
-        </div>
+    <div className="h-screen font-sans overflow-hidden relative flex flex-col" style={{ backgroundColor: secondaryColor, color: primaryColor }}>
+
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-500/10 blur-[100px]"
+        />
+        <motion.div
+          animate={{ scale: [1, 1.1, 1], x: [0, 50, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-teal-500/10 blur-[80px]"
+        />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className={`text-center mb-8 transition-all duration-1000 ${isVisible ? 'animate-fade-up' : 'opacity-0'}`}>
-          <div className="w-24 h-24 rounded-2xl bg-accent mx-auto mb-6 flex items-center justify-center animate-scale-in">
-            <PerformanceIcon className="w-12 h-12 text-accent-foreground" />
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="max-w-7xl mx-auto relative z-10 p-4 md:p-6 h-full flex flex-col"
+      >
+        {/* Header Section */}
+        <motion.header variants={itemVariants} className="flex justify-between items-center mb-6 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg bg-emerald-900/50 border border-emerald-800">
+              <Sparkles className="w-5 h-5 text-emerald-300" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold" style={{ color: primaryColor }}>Assessment Report</h1>
+              <p className="text-xs text-emerald-400/60 font-medium">Detailed performance analytics</p>
+            </div>
           </div>
-          <h1 className="text-5xl font-bold font-serif mb-4 bg-primary text-primary-foreground px-8 py-4 rounded-xl inline-block shadow-lg">
-            Assessment Complete!
-          </h1>
-          <p className="text-xl text-[#0F2C1F] dark:text-[#2d5a3d] mb-2 font-medium">
-            Here's your personalized performance analysis
-          </p>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            <Sparkles className="w-4 h-4 mr-2" />
-            {performance.level}
-          </Badge>
-        </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="bg-emerald-900/30 border-emerald-800 hover:bg-emerald-900/50 text-emerald-100 h-8 text-xs hover:text-white">
+              <Share2 className="w-3 h-3 mr-2" /> Share
+            </Button>
+            <Button variant="outline" size="sm" className="bg-emerald-900/30 border-emerald-800 hover:bg-emerald-900/50 text-emerald-100 h-8 text-xs hover:text-white">
+              <Download className="w-3 h-3 mr-2" /> PDF
+            </Button>
+          </div>
+        </motion.header>
 
-        {/* Main Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className={`card-forest hover-lift transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-left' : 'opacity-0'}`}>
-            <CardHeader className="text-center pb-2">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 mx-auto mb-2 flex items-center justify-center">
-                <Target className="w-6 h-6 text-primary" />
+        {/* Hero Grid - Adjusted for Fit */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow min-h-0">
+          {/* Main Score & Breakdown Card */}
+          <motion.div variants={itemVariants} className="lg:col-span-5 relative group flex flex-col h-full">
+            <div className="relative h-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl flex flex-col justify-between overflow-hidden p-6 hover:bg-white/10 transition-all duration-300">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <Trophy className="w-32 h-32" style={{ color: primaryColor }} />
               </div>
-              <CardTitle className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-semibold">Accuracy</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <div className="text-4xl font-bold text-primary mb-1">
-                {animatedStats.accuracy}%
-              </div>
-              <Progress value={result.accuracy} className="h-2 mb-2" />
-              <p className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">
-                {result.correctAnswers} of {result.totalQuestions} correct
-              </p>
-            </CardContent>
-          </Card>
 
-          <Card className={`card-forest hover-lift transition-all duration-1000 delay-500 ${isVisible ? 'animate-fade-up' : 'opacity-0'}`}>
-            <CardHeader className="text-center pb-2">
-              <div className="w-12 h-12 rounded-xl bg-secondary/10 mx-auto mb-2 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-secondary" />
+              <div className="flex-shrink-0">
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-3 px-3 py-1 text-xs">Overall Performance</Badge>
+                <div className="flex items-end gap-4">
+                  <h2 className={`text-7xl font-black ${grade.color} leading-none tracking-tighter`}>
+                    {grade.label}
+                  </h2>
+                  <div className="mb-2">
+                    <h3 className="text-2xl font-bold" style={{ color: primaryColor }}>{grade.title}</h3>
+                    <p className="text-sm text-emerald-400/60 font-medium">Better than 85% of peers</p>
+                  </div>
+                </div>
               </div>
-              <CardTitle className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-semibold">Score</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <div className="text-4xl font-bold text-secondary mb-1">
-                {animatedStats.correctAnswers}
-              </div>
-              <p className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">
-                out of {result.totalQuestions}
-              </p>
-              <div className="flex justify-center mt-2">
-                {Array.from({ length: Math.floor(result.correctAnswers / 2) }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-accent fill-current" />
+
+              {/* Category Marks Breakdown */}
+              <div className="my-6 space-y-3 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                <h4 className="text-sm font-bold uppercase opacity-50 tracking-wider mb-2" style={{ color: primaryColor }}>Category Performance</h4>
+                {Object.entries(safeResult.categoryBreakdown).map(([cat, stats]) => (
+                  <div key={cat} className="flex items-center justify-between bg-emerald-900/20 p-3 rounded-xl border border-emerald-800/30 hover:bg-emerald-900/40 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${cat.includes('Quant') ? 'bg-blue-900/30 text-blue-300' :
+                        cat.includes('Logic') ? 'bg-purple-900/30 text-purple-300' : 'bg-orange-900/30 text-orange-300'
+                        }`}>
+                        {cat.includes('Quant') ? <Target className="w-4 h-4" /> :
+                          cat.includes('Logic') ? <Brain className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
+                      </div>
+                      <span className="font-semibold text-emerald-100 text-sm">{cat}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-lg font-bold" style={{ color: primaryColor }}>{stats.correct}</span>
+                      <span className="text-xs text-emerald-500">/{stats.total}</span>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className={`card-forest hover-lift transition-all duration-1000 delay-700 ${isVisible ? 'animate-slide-in-right' : 'opacity-0'}`}>
-            <CardHeader className="text-center pb-2">
-              <div className="w-12 h-12 rounded-xl bg-accent/10 mx-auto mb-2 flex items-center justify-center">
-                <Clock className="w-6 h-6 text-accent" />
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10 flex-shrink-0">
+                <div>
+                  <p className="text-xs text-emerald-500 uppercase tracking-wider font-semibold">Total Correct</p>
+                  <p className="text-2xl font-bold" style={{ color: primaryColor }}>{safeResult.correctAnswers}<span className="text-sm text-emerald-600 font-normal">/{safeResult.totalQuestions}</span></p>
+                </div>
+                <div>
+                  <p className="text-xs text-emerald-500 uppercase tracking-wider font-semibold">Time Taken</p>
+                  <p className="text-2xl font-bold" style={{ color: primaryColor }}>{formatTime(safeResult.timeSpent)}</p>
+                </div>
               </div>
-              <CardTitle className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-semibold">Time Spent</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <div className="text-4xl font-bold text-accent mb-1">
-                {formatTime(animatedStats.timeSpent)}
+            </div>
+          </motion.div>
+
+          {/* Right Column: Big Chart & Feedback */}
+          <motion.div variants={itemVariants} className="lg:col-span-7 flex flex-col gap-6 h-full min-h-0">
+            {/* BIG Radar Chart Card */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-4 shadow-2xl flex-grow relative flex flex-col items-center justify-center min-h-0 hover:bg-white/10 transition-all duration-300">
+              <h3 className="absolute top-6 left-6 text-sm font-bold flex items-center gap-2" style={{ color: primaryColor }}>
+                <Target className="w-4 h-4 text-emerald-400" /> Skill Analysis
+              </h3>
+              <div className="w-full h-full max-h-[400px]">
+                {hasData && radarData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                      <PolarGrid stroke="#1F4D36" strokeWidth={1} />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#CCDBD0', fontSize: 13, fontWeight: 700 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                      <Radar
+                        name="Score"
+                        dataKey="A"
+                        stroke="#10B981" // emerald-500
+                        strokeWidth={3}
+                        fill="#10B981"
+                        fillOpacity={0.3}
+                        dot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: '#0F2C1F' }}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#061a12', border: '1px solid #1F4D36', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)' }}
+                        itemStyle={{ color: '#CCDBD0', fontWeight: 'bold' }}
+                        labelStyle={{ color: '#9CA3AF' }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-emerald-500/50">
+                    Not enough data for chart
+                  </div>
+                )}
               </div>
-              <p className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">
-                Average: {Math.round(result.timeSpent / result.totalQuestions)}s per question
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Personalized Feedback Card */}
+            <div className="bg-[#E9F2EB] text-[#0F2C1F] rounded-[2rem] p-6 shadow-xl flex flex-col justify-center relative overflow-hidden flex-shrink-0 h-[35%] border border-white/20">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+              <h3 className="text-lg font-bold flex items-center gap-2 mb-4 relative z-10" style={{ color: '#0F2C1F' }}>
+                <Lightbulb className="w-5 h-5 text-emerald-600" /> Smart Recommendations
+              </h3>
+
+              <div className="space-y-3 relative z-10 overflow-y-auto pr-2 custom-scrollbar">
+                {recommendations.map((rec, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-[#0F2C1F]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <rec.icon className="w-3 h-3 text-[#0F2C1F]" />
+                    </div>
+                    <p className="text-[#0F2C1F]/80 text-sm leading-relaxed font-medium">{rec.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Performance Description */}
-        <Card className={`card-forest mb-8 transition-all duration-1000 delay-900 ${isVisible ? 'animate-fade-up' : 'opacity-0'}`}>
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2 text-[#0F2C1F] dark:text-[#2d5a3d]">Performance Analysis</h3>
-                <p className="text-[#0F2C1F] dark:text-[#2d5a3d]">{performance.description}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Category Breakdown */}
-        <Card className={`card-forest mb-8 transition-all duration-1000 delay-1100 ${isVisible ? 'animate-fade-up' : 'opacity-0'}`}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Category Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(result.categoryBreakdown).map(([category, stats], index) => (
-                <div key={category} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-[#0F2C1F] dark:text-[#2d5a3d]">{category}</span>
-                    <span className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-semibold">
-                      {stats.correct}/{stats.total}
-                    </span>
-                  </div>
-                  <Progress
-                    value={(stats.correct / stats.total) * 100}
-                    className="h-2"
-                  />
-                  <p className="text-xs text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">
-                    {Math.round((stats.correct / stats.total) * 100)}% accuracy
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Difficulty Breakdown */}
-        <Card className={`card-forest mb-8 transition-all duration-1000 delay-1300 ${isVisible ? 'animate-fade-up' : 'opacity-0'}`}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5" />
-              Difficulty Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {Object.entries(result.difficultyBreakdown).map(([difficulty, stats]) => (
-                <div key={difficulty} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Badge variant={
-                      difficulty === 'Easy' ? 'secondary' :
-                      difficulty === 'Medium' ? 'default' : 'destructive'
-                    }>
-                      {difficulty}
-                    </Badge>
-                    <span className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">
-                      {stats.correct}/{stats.total} correct
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-semibold text-[#0F2C1F] dark:text-[#2d5a3d]">
-                      {Math.round((stats.correct / stats.total) * 100)}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recommendations */}
-        <Card className={`card-forest mb-8 transition-all duration-1000 delay-1500 ${isVisible ? 'animate-fade-up' : 'opacity-0'}`}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="w-5 h-5" />
-              Personalized Recommendations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recommendations.map((recommendation, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-secondary mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">{recommendation}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className={`flex flex-col sm:flex-row gap-4 justify-center transition-all duration-1000 delay-1700 ${isVisible ? 'animate-fade-up' : 'opacity-0'}`}>
-          <Button
-            onClick={() => navigate('/gd-portal')}
-            className="btn-forest"
-          >
-            <ArrowRight className="mr-2 w-4 h-4" />
-            Proceed to the Next Round
-          </Button>
-          <Button
-            onClick={() => navigate('/mock-placement/assessment')}
-            variant="outline"
-            className="btn-outline-forest"
-          >
-            <RefreshCw className="mr-2 w-4 h-4" />
-            Retake Assessment
-          </Button>
-          <Button
-            variant="outline"
-            asChild
-            className="btn-outline-forest"
-          >
-            <Link to="/student/dashboard">
-              Back to Dashboard
-              <ArrowRight className="ml-2 w-4 h-4" />
-            </Link>
-          </Button>
-        </div>
-      </div>
+        {/* Action Bar */}
+        <motion.div variants={itemVariants} className="flex justify-center flex-shrink-0 mt-4">
+          <div className="bg-[#0b2117]/80 backdrop-blur-xl border border-emerald-800/30 p-2 rounded-2xl shadow-2xl flex gap-3 pointer-events-auto ring-1 ring-black/20">
+            <Button
+              variant="ghost"
+              className="hover:bg-emerald-900/50 text-emerald-400 hover:text-emerald-200 rounded-xl h-10"
+              onClick={() => navigate('/student/dashboard')}
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Dashboard
+            </Button>
+            <div className="w-px h-6 bg-emerald-800/50 mx-1 self-center" />
+            <Button
+              variant="secondary"
+              className="bg-emerald-900/50 text-emerald-100 hover:bg-emerald-800 rounded-xl h-10 border border-emerald-800/50"
+              onClick={() => navigate('/mock-placement')}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retake
+            </Button>
+            <Button
+              className={`text-[#0F2C1F] border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-10 px-6 font-semibold ${!(safeResult.correctAnswers > 20 || nextRoundClicks >= 5) ? 'opacity-50 cursor-not-allowed grayscale' : ''
+                }`}
+              style={{ backgroundColor: '#CCDBD0' }}
+              onClick={() => {
+                const hasPassed = safeResult.correctAnswers > 20;
+                if (hasPassed || nextRoundClicks >= 5) {
+                  navigate('/techprep');
+                } else {
+                  setNextRoundClicks(prev => prev + 1);
+                }
+              }}
+            >
+              {safeResult.correctAnswers > 20 ? "Next: Technical Round" : "Technical Round (Locked)"}
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

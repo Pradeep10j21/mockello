@@ -33,6 +33,7 @@ import CompanyJobCriteria from "./pages/company/CompanyJobCriteria";
 import CompanyColleges from "./pages/company/CompanyColleges";
 import CollegeDetail from "./pages/company/CollegeDetail";
 import CompanyUpdates from "./pages/company/CompanyUpdates";
+import InterviewPerformance from "./pages/company/InterviewPerformance";
 
 // Student Module
 import StudentLandingPage from "./pages/student/StudentLandingPage";
@@ -56,6 +57,20 @@ import GDPortal from "./pages/gd-room/GDPortal";
 import WaitingRoom from "./pages/gd-room/WaitingRoom";
 import GDRoom from "./pages/gd-room/GDRoom";
 import GDResult from "./pages/gd-room/GDResult";
+
+// Interview Sim Module
+import InterviewSetup from "./pages/interview-sim/InterviewSetup";
+import InterviewSession from "./pages/interview-sim/InterviewSession";
+import InterviewResult from "./pages/interview-sim/InterviewResult";
+import InterviewResultDraft from "./pages/interview-sim/InterviewResultDraft";
+import HRInterviewPortal from "./pages/company/HRInterviewPortal";
+import DebugAudio from "./pages/DebugAudio";
+
+// TechPrep Module
+import TechPrepLanding from "./pages/techprep/TechPrepLanding";
+import TechPrepInstructions from "./pages/techprep/TechPrepInstructions";
+import TechPrepTest from "./pages/techprep/TechPrepTest";
+import TechPrepResults from "./pages/techprep/TechPrepResults";
 
 // Interview Module
 import InterviewLandingPage from "./pages/interview/InterviewLandingPage";
@@ -102,6 +117,8 @@ const App = () => (
           <Route path="/company/colleges" element={<CompanyColleges />} />
           <Route path="/company/college/:id" element={<CollegeDetail />} />
           <Route path="/company/updates" element={<CompanyUpdates />} />
+          <Route path="/company/dict" element={<InterviewPerformance />} /> {/* Using 'dict' as a shorthand or you can use /performance */}
+          <Route path="/company/performance" element={<InterviewPerformance />} />
 
           {/* Student Portal Routes */}
           <Route path="/student" element={<StudentLandingPage />} />
@@ -126,11 +143,28 @@ const App = () => (
           <Route path="/gd-portal/gd-room" element={<GDRoom />} />
           <Route path="/gd-portal/result" element={<GDResult />} />
 
-          {/* Interview Routes */}
-          <Route path="/interview" element={<InterviewLandingPage />} />
-          <Route path="/interview/select" element={<CompanySelection />} />
-          <Route path="/interview/:companyId" element={<InterviewPage />} />
-          <Route path="/interview/result" element={<ResultPage />} />
+          {/* TechPrep Assessment Routes */}
+          <Route path="/techprep" element={<TechPrepLanding />} />
+          <Route path="/techprep/instructions" element={<TechPrepInstructions />} />
+          <Route path="/techprep/test" element={<TechPrepTest />} />
+          <Route path="/techprep/results" element={<TechPrepResults />} />
+
+          {/* Interview Simulator Routes (New Integration) */}
+          <Route path="/interview" element={<InterviewSetup />} />
+          <Route path="/interview/session" element={<InterviewSession />} />
+          <Route path="/interview/result" element={<InterviewResult />} /> {/* Result Page */}
+          <Route path="/interview/result" element={<InterviewResult />} /> {/* Result Page */}
+          {/* <Route path="/test/result-ui" element={<InterviewResultDraft />} /> */}
+
+          {/* HR Interview Portal */}
+          <Route path="/hr-portal" element={<HRInterviewPortal />} />
+          <Route path="/debug-audio" element={<DebugAudio />} />
+
+          {/* Legacy Interview Routes (Deprecated) */}
+          {/* <Route path="/interview" element={<InterviewLandingPage />} /> */}
+          {/* <Route path="/interview/select" element={<CompanySelection />} /> */}
+          {/* <Route path="/interview/:companyId" element={<InterviewPage />} /> */}
+          {/* <Route path="/interview/result" element={<ResultPage />} /> */}
 
           {/* Common Routes */}
           <Route path="/approval-pending" element={<ApprovalPending />} />
