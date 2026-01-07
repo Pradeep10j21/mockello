@@ -572,14 +572,34 @@ const HRInterviewPortal = () => {
                         </div>
                         <Button size="sm" variant="outline" className="w-full text-xs">Download</Button>
                     </div>
-                    <div className="flex-1 bg-white rounded-xl p-4 border border-[#e6efe9] flex items-center justify-center min-h-[300px] shadow-sm">
-                        <div className="text-center">
-                            <div className="space-y-2">
-                                <div className="h-3 bg-slate-300 rounded w-24 mx-auto"></div>
-                                <div className="h-3 bg-slate-300 rounded w-32 mx-auto"></div>
-                                <div className="h-3 bg-slate-300 rounded w-20 mx-auto"></div>
+                    <div className="flex-1 bg-white rounded-xl p-4 border border-[#e6efe9] flex items-start justify-start min-h-[300px] shadow-sm overflow-auto">
+                        <div className="w-full text-sm text-[#145032]">
+                            <h3 className="text-base font-bold">Siddharth J. Srivastava</h3>
+                            <p className="text-xs text-[#3b6b55] mb-3">Software Engineer • Mumbai Institute of Technology • +91 98765 43210 • siddharth@example.com</p>
+
+                            <div className="text-xs text-slate-700 mb-3">
+                                <div className="font-semibold text-[12px]">Summary</div>
+                                <div className="mt-1 text-[12px] text-slate-600">Experienced full-stack developer with 4+ years building scalable web applications using React, Node.js and Python. Passionate about building delightful user experiences and reliable backend systems.</div>
                             </div>
-                            <p className="text-xs text-slate-400 mt-4">Resume preview (PDF)</p>
+
+                            <div className="text-xs text-slate-700 mb-3">
+                                <div className="font-semibold text-[12px]">Experience</div>
+                                <div className="mt-1 text-[12px] space-y-2 text-slate-600">
+                                    <div>
+                                        <div className="font-semibold">Senior Developer — TechCorp Solutions</div>
+                                        <div className="text-[11px] text-slate-500">2022 — Present</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold">Developer — DataFlow Inc</div>
+                                        <div className="text-[11px] text-slate-500">2019 — 2022</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="text-xs text-slate-700 mb-2">
+                                <div className="font-semibold text-[12px]">Education</div>
+                                <div className="mt-1 text-[12px] text-slate-600">B.Tech Computer Science — Mumbai Institute of Technology, 2019</div>
+                            </div>
                         </div>
                     </div>
                     <div className="text-xs text-[#436b55] font-semibold">Page 2 (preview)</div>
