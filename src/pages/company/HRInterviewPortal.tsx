@@ -55,7 +55,10 @@ const HRInterviewPortal = () => {
     const streamRef = useRef<MediaStream | null>(null);
     const remoteStreamRef = useRef<MediaStream | null>(null); // Store remote stream for delayed attachment
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const callRef = useRef<any>(null);
+    const screenStreamRef = useRef<MediaStream | null>(null);
     const transcriptEndRef = useRef<HTMLDivElement>(null);
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
     const micRef = useRef(isMicOn); // Ref for closures
     const isConnectedRef = useRef(isConnected);
 
@@ -245,6 +248,7 @@ const HRInterviewPortal = () => {
         if (!peer || peer.destroyed) return;
         console.log(`[WebRTC] Calling: ${targetPeerId}`);
         const call = peer.call(targetPeerId, stream);
+        callRef.current = call;
         if (call) {
             call.on('stream', (remoteStream) => {
                 console.log("[WebRTC] Remote Stream Received");
@@ -277,6 +281,7 @@ const HRInterviewPortal = () => {
                 });
 
                 peer.on('call', (call) => {
+                    callRef.current = call;
                     call.answer(stream);
                     call.on('stream', (remoteStream) => {
                         remoteStreamRef.current = remoteStream;
@@ -328,6 +333,75 @@ const HRInterviewPortal = () => {
     const toggleVideo = () => {
         const track = streamRef.current?.getVideoTracks()[0];
         if (track) { track.enabled = !track.enabled; setIsVideoOn(track.enabled); }
+    };
+
+    // Replace the outgoing video track in the Peer connection and local stream
+    const replaceOutgoingVideoTrack = async (newTrack: MediaStreamTrack) => {
+        try {
+            // Update local stream
+            if (streamRef.current) {
+                // Remove existing video tracks
+                streamRef.current.getVideoTracks().forEach(t => streamRef.current?.removeTrack(t));
+                streamRef.current.addTrack(newTrack);
+                if (myVideoRef.current) myVideoRef.current.srcObject = streamRef.current;
+            }
+
+            // Replace track on peer connection sender
+            const pc = callRef.current?.peerConnection;
+            if (pc && typeof pc.getSenders === 'function') {
+                const sender = pc.getSenders().find((s: any) => s.track && s.track.kind === 'video');
+                if (sender) {
+                    await sender.replaceTrack(newTrack);
+                }
+            }
+        } catch (e) { console.error('Replace track failed', e); }
+    };
+
+    const startScreenShare = async () => {
+        try {
+            const screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
+            const screenTrack = screenStream.getVideoTracks()[0];
+            if (!screenTrack) throw new Error('No screen track');
+
+            // When the user stops sharing via browser UI, revert
+            screenTrack.onended = () => {
+                stopScreenShare();
+            };
+
+            screenStreamRef.current = screenStream;
+            await replaceOutgoingVideoTrack(screenTrack);
+            setIsScreenSharing(true);
+            setIsVideoOn(true);
+            addDebug('Screen sharing started');
+        } catch (e) {
+            console.error('Screen share error', e);
+            toast.error('Could not start screen share');
+        }
+    };
+
+    const stopScreenShare = async () => {
+        try {
+            // Stop any existing screen tracks
+            screenStreamRef.current?.getTracks().forEach(t => t.stop());
+            screenStreamRef.current = null;
+
+            // Try to re-acquire camera video and replace track
+            const camStream = await navigator.mediaDevices.getUserMedia({ video: true }).catch(() => null);
+            const camTrack = camStream?.getVideoTracks()[0];
+            if (camTrack) {
+                await replaceOutgoingVideoTrack(camTrack);
+                setIsVideoOn(true);
+                addDebug('Screen sharing stopped — returned to camera');
+            } else {
+                // If camera unavailable, remove video track
+                if (streamRef.current) streamRef.current.getVideoTracks().forEach(t => t.stop());
+                setIsVideoOn(false);
+            }
+        } catch (e) {
+            console.error('Stop screen share failed', e);
+        } finally {
+            setIsScreenSharing(false);
+        }
     };
     const handleManualRetry = () => {
         if (peerInstance.current && streamRef.current) connectToHost(peerInstance.current, streamRef.current);
@@ -418,6 +492,9 @@ const HRInterviewPortal = () => {
                         <Button variant="outline" size="icon" onClick={toggleVideo} className={`rounded-xl w-12 h-12 bg-white/5 border-white/10 hover:bg-white/10 ${!isVideoOn && 'bg-red-500/80 text-white'}`}>
                             {isVideoOn ? <Video size={20} /> : <VideoOff size={20} />}
                         </Button>
+                        <Button variant="outline" size="icon" onClick={isScreenSharing ? stopScreenShare : startScreenShare} className={`rounded-xl w-12 h-12 bg-white/5 border-white/10 hover:bg-white/10 ${isScreenSharing ? 'bg-emerald-600 text-white' : ''}`} title={isScreenSharing ? 'Stop Screen Share' : 'Share Screen'}>
+                            <Video size={18} />
+                        </Button>
                         <Button variant="destructive" onClick={endCall} className="h-12 px-10 rounded-xl font-bold uppercase tracking-widest shadow-xl">Leave</Button>
                     </div>
                 </div>
@@ -440,6 +517,7 @@ const HRInterviewPortal = () => {
                 <div className="flex items-center gap-4">
                     <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-tighter ${isConnected ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-500'}`}>{isConnected ? 'Connected' : 'Disconnected'}</span>
                     <Button size="sm" variant="ghost" className="text-xs hover:bg-emerald-50" onClick={handleManualRetry}><RefreshCw className="w-3 h-3 mr-2" /> Retry Link</Button>
+                    <Button size="sm" variant={isScreenSharing ? "default" : "ghost"} className="text-xs hover:bg-emerald-50" onClick={isScreenSharing ? stopScreenShare : startScreenShare}>{isScreenSharing ? 'Sharing' : 'Share Screen'}</Button>
                     <Button size="sm" variant="destructive" onClick={endCall} className="rounded-lg px-6 font-bold uppercase tracking-tighter">Exit</Button>
                 </div>
             </header>
