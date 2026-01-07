@@ -1,4 +1,10 @@
 from fastapi import FastAPI
+# Load environment variables from backend/.env when present
+from dotenv import load_dotenv
+import os
+
+# Prefer loading a local backend/.env for development (do NOT commit real keys)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from backend.routers import student, college, company, admin
