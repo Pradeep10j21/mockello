@@ -242,7 +242,7 @@ const CompanyDashboard = () => {
               <button
                 onClick={() => {
                   const sid = 'session-' + Math.floor(1000 + Math.random() * 9000);
-                  navigate(`/hr-portal?session=${sid}&role=interviewer`);
+                  navigate(`/hr-interview-panel?session=${sid}&role=interviewer`);
                 }}
                 className="p-4 rounded-xl bg-forest-medium/10 hover:bg-forest-medium/20 transition-colors text-center group border border-forest-medium/30"
               >

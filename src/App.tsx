@@ -157,6 +157,7 @@ const App = () => (
           {/* <Route path="/test/result-ui" element={<InterviewResultDraft />} /> */}
 
           {/* HR Interview Portal */}
+          <Route path="/hr-interview-panel" element={<HRInterviewPortal />} />
           <Route path="/hr-portal" element={<HRInterviewPortal />} />
           <Route path="/debug-audio" element={<DebugAudio />} />
 
