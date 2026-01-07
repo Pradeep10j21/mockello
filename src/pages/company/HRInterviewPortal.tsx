@@ -38,6 +38,9 @@ const HRInterviewPortal = () => {
     const [notes, setNotes] = useState('');
     const [decision, setDecision] = useState('Hold');
     const [isSaving, setIsSaving] = useState(false);
+    const [interviewStartTime, setInterviewStartTime] = useState<Date | null>(null);
+    const [elapsedTime, setElapsedTime] = useState('00:00:00');
+    const [guideCollapsed, setGuideCollapsed] = useState(false);
 
     // Transcription State
     const [transcripts, setTranscripts] = useState<TranscriptMsg[]>([]);
@@ -65,6 +68,22 @@ const HRInterviewPortal = () => {
     // Sync refs
     useEffect(() => { micRef.current = isMicOn; }, [isMicOn]);
     useEffect(() => { isConnectedRef.current = isConnected; }, [isConnected]);
+
+    // Timer effect
+    useEffect(() => {
+        if (!interviewStartTime) return;
+        const interval = setInterval(() => {
+            const now = new Date();
+            const diff = Math.floor((now.getTime() - interviewStartTime.getTime()) / 1000);
+            const hrs = Math.floor(diff / 3600);
+            const mins = Math.floor((diff % 3600) / 60);
+            const secs = diff % 60;
+            setElapsedTime(
+                `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+            );
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [interviewStartTime]);
 
     // Housekeeping
     const companyData = getCompanyData();
@@ -510,58 +529,136 @@ const HRInterviewPortal = () => {
         );
     }
 
+    const interviewGuide = [
+        '1. Self Introduction',
+        '2. Experience',
+        '3. Communication',
+        '4. Strengths & Weaknesses',
+        '5. Career Goals',
+        '6. Cultural Fit'
+    ];
+
     return (
-        <div className="h-screen bg-[#f3f5f4] text-slate-800 flex flex-col overflow-hidden font-sans">
-            <header className="h-14 bg-white border-b flex items-center justify-between px-6 shadow-sm z-10">
-                <div className="flex items-center gap-2 font-bold text-lg text-emerald-900 font-display"><Users size={20} className="text-emerald-600" /> HR Panel</div>
+        <div className="h-screen bg-white text-slate-800 flex flex-col overflow-hidden font-sans">
+            {/* Header */}
+            <header className="h-16 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
+                <div className="flex items-center gap-6 flex-1">
+                    <div>
+                        <h1 className="text-lg font-bold text-slate-900">HR Interview Panel</h1>
+                        <p className="text-xs text-slate-500 mt-0.5">Siddharth J. Srivastava | Software Engineer | resume-1052-04.647407.mp4</p>
+                    </div>
+                </div>
                 <div className="flex items-center gap-4">
-                    <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-tighter ${isConnected ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-500'}`}>{isConnected ? 'Connected' : 'Disconnected'}</span>
-                    <Button size="sm" variant="ghost" className="text-xs hover:bg-emerald-50" onClick={handleManualRetry}><RefreshCw className="w-3 h-3 mr-2" /> Retry Link</Button>
-                    <Button size="sm" variant={isScreenSharing ? "default" : "ghost"} className="text-xs hover:bg-emerald-50" onClick={isScreenSharing ? stopScreenShare : startScreenShare}>{isScreenSharing ? 'Sharing' : 'Share Screen'}</Button>
-                    <Button size="sm" variant="destructive" onClick={endCall} className="rounded-lg px-6 font-bold uppercase tracking-tighter">Exit</Button>
+                    <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        <span className="text-xs font-semibold text-slate-700">LIVE</span>
+                    </div>
+                    <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">Connection: Stable</span>
+                    <span className="text-xs font-mono font-bold text-slate-600">{elapsedTime}</span>
+                    <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg" onClick={() => !interviewStartTime && setInterviewStartTime(new Date())}>Start Interview</Button>
+                    <Button size="sm" variant="ghost" className="text-slate-600 hover:bg-slate-100">Debug</Button>
                 </div>
             </header>
+
+            {/* Main Content */}
             <div className="flex-1 flex overflow-hidden">
-                <div className="w-[350px] bg-white border-r shadow-sm"><TranscriptionBox /></div>
-                <div className="flex-1 bg-slate-200/50 p-4 relative overflow-hidden flex flex-col">
-                    <div className="flex-1 bg-[#1a3a32] rounded-3xl overflow-hidden relative shadow-2xl border border-black/5">
-                        <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                        {!isConnected && <div className="absolute inset-0 flex items-center justify-center text-white/10 uppercase tracking-[0.2em] font-bold">Waiting for Candidate...</div>}
+                {/* Left Sidebar - Resume */}
+                <div className="w-72 bg-white border-r border-slate-200 p-6 flex flex-col gap-4 overflow-y-auto">
+                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="font-bold text-sm text-slate-900">Resume</h2>
+                            <span className="text-xs text-slate-500 font-semibold">Page 1 / 2</span>
+                        </div>
+                        <Button size="sm" variant="outline" className="w-full text-xs">Download</Button>
                     </div>
-                    <div className="absolute bottom-10 right-10 w-56 aspect-video bg-[#0d1f1b] rounded-2xl border-4 border-white shadow-2xl overflow-hidden z-20">
+                    <div className="flex-1 bg-slate-100 rounded-xl p-4 border border-slate-200 flex items-center justify-center min-h-[300px]">
+                        <div className="text-center">
+                            <div className="space-y-2">
+                                <div className="h-3 bg-slate-300 rounded w-24 mx-auto"></div>
+                                <div className="h-3 bg-slate-300 rounded w-32 mx-auto"></div>
+                                <div className="h-3 bg-slate-300 rounded w-20 mx-auto"></div>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-4">Resume preview (PDF)</p>
+                        </div>
+                    </div>
+                    <div className="text-xs text-slate-500 font-semibold">Page 2 (preview)</div>
+                    <div className="h-32 bg-slate-50 rounded-xl border border-slate-200"></div>
+                </div>
+
+                {/* Center - Video */}
+                <div className="flex-1 bg-slate-50 p-6 flex flex-col relative">
+                    <div className="flex-1 bg-white rounded-2xl border-2 border-slate-200 overflow-hidden relative flex items-center justify-center">
+                        {!isConnected ? (
+                            <div className="flex flex-col items-center gap-3 text-slate-400">
+                                <RefreshCw className="w-10 h-10 animate-spin opacity-50" />
+                                <span className="text-sm font-semibold">Waiting for Candidate...</span>
+                            </div>
+                        ) : (
+                            <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                        )}
+                        <div className="absolute top-4 left-4 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Stable</div>
+                        <div className="absolute bottom-4 right-4 text-xs text-slate-500 font-semibold">Camera: Off</div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-center gap-3">
+                        <Button variant="outline" size="icon" onClick={toggleMic} className={`w-10 h-10 rounded-lg ${!isMicOn ? 'bg-red-500 text-white border-red-500' : ''}`}>
+                            {isMicOn ? <Mic size={18} /> : <MicOff size={18} />}
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={toggleVideo} className={`w-10 h-10 rounded-lg ${!isVideoOn ? 'bg-red-500 text-white border-red-500' : ''}`}>
+                            {isVideoOn ? <Video size={18} /> : <VideoOff size={18} />}
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={isScreenSharing ? stopScreenShare : startScreenShare} className={`w-10 h-10 rounded-lg ${isScreenSharing ? 'bg-emerald-600 text-white border-emerald-600' : ''}`} title={isScreenSharing ? 'Stop Screen Share' : 'Share Screen'}>
+                            <Video size={18} />
+                        </Button>
+                    </div>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-48 h-32 bg-slate-200 rounded-lg border-2 border-slate-300 flex items-center justify-center text-xs text-slate-500 font-semibold overflow-hidden">
                         <video ref={myVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                        <div className="absolute bottom-2 right-2 bg-white px-2 py-1 rounded text-xs font-semibold text-slate-700">You</div>
                     </div>
                 </div>
-                <div className="w-[380px] bg-white border-l p-6 flex flex-col gap-6 shadow-2xl z-10">
-                    <div className="flex-1 flex flex-col gap-3">
-                        <div className="bg-black/90 p-2 rounded text-[10px] font-mono text-green-400 mb-2 h-20 overflow-hidden flex flex-col gap-1">
-                            {/* Volume Meter */}
-                            <div className="flex items-center gap-2 border-b border-white/20 pb-1 mb-1">
-                                <span>Vol:</span>
-                                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-green-500 transition-all duration-75 ease-out"
-                                        style={{ width: `${volumeLevel}%` }}
-                                    />
-                                </div>
-                                <span>{volumeLevel}%</span>
-                            </div>
-                            {/* Logs */}
-                            <div className="flex-1 overflow-y-auto scrollbar-hide">
-                                {debugStatus.map((msg, i) => <div key={i}>{msg}</div>)}
-                            </div>
+
+                {/* Right Sidebar - Guide & Notes */}
+                <div className="w-80 bg-white border-l border-slate-200 flex flex-col p-6 gap-6 overflow-y-auto">
+                    {/* Interview Guide */}
+                    <div className="border border-slate-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-bold text-sm text-slate-900">HR Interview Guide</h3>
+                            <Button size="sm" variant="ghost" className="text-xs h-6 px-2" onClick={() => setGuideCollapsed(!guideCollapsed)}>
+                                {guideCollapsed ? 'Expand' : 'Collapse'}
+                            </Button>
                         </div>
-                        <label className="text-[10px] font-bold uppercase opacity-40 tracking-widest flex items-center gap-2"><FileText size={12} /> Notes & Observation</label>
-                        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="flex-1 resize-none bg-slate-50 border-none rounded-2xl p-5 text-sm leading-relaxed shadow-inner" placeholder="Type behavioral and skill observations here..." />
+                        {!guideCollapsed && (
+                            <div className="space-y-2">
+                                {interviewGuide.map((item, idx) => (
+                                    <div key={idx} className="text-xs text-slate-600 py-1">{item}</div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        {['Strong Hire', 'Hire', 'Hold', 'Reject'].map(d => (
-                            <Button key={d} variant={decision === d ? 'default' : 'outline'} size="sm" onClick={() => setDecision(d)} className={`text-[10px] uppercase font-bold rounded-xl h-11 ${decision === d ? 'bg-emerald-600 shadow-lg shadow-emerald-100' : ''}`}>{d}</Button>
-                        ))}
+
+                    {/* Interview Notes */}
+                    <div className="flex-1 flex flex-col">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-bold text-sm text-slate-900">HR Interview Notes</h3>
+                            <span className="text-xs text-emerald-600 font-semibold">All changes saved</span>
+                        </div>
+                        <Textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            className="flex-1 resize-none border border-slate-200 rounded-lg p-3 text-xs leading-relaxed focus:border-emerald-500 focus:outline-none"
+                            placeholder="Capture answers, behavior, confidence, communication quality, and observations..."
+                        />
                     </div>
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 h-14 rounded-2xl text-white font-bold uppercase tracking-widest shadow-xl shadow-emerald-100 mt-2" onClick={handleSaveNotes} disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Result'}
-                    </Button>
+                </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="h-16 bg-white border-t border-slate-200 flex items-center justify-between px-8">
+                <div className="flex items-center gap-4">
+                    <span className="text-sm font-mono font-bold text-slate-600">{elapsedTime}</span>
+                    <Button variant="outline" className="text-sm font-semibold rounded-lg">Mark Interview Completed</Button>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" className="text-sm font-semibold rounded-lg">Proceed to Next Round</Button>
                 </div>
             </div>
         </div>
