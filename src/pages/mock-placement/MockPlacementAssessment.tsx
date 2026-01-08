@@ -52,9 +52,11 @@ const MockPlacementAssessment = () => {
     const handleTabSwitch = () => {
       setTabSwitchCount(prev => {
         const newCount = prev + 1;
+        console.log(`[Assessment] Tab switch detected. Total: ${newCount}`);
+
         if (newCount > 5) {
-          alert("Violated tab switch limit (5 times). The test will now restart.");
-          window.location.reload();
+          alert("Violated tab switch limit (5 times). The test will now submit.");
+          handleSubmitAssessment();
           return newCount;
         }
         setShowTabWarning(true);
@@ -69,7 +71,10 @@ const MockPlacementAssessment = () => {
     };
 
     const handleBlur = () => {
-      handleTabSwitch();
+      // Only handle blur if the document isn't already hidden (to avoid double counting)
+      if (!document.hidden) {
+        handleTabSwitch();
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -262,12 +267,12 @@ const MockPlacementAssessment = () => {
                 key={index}
                 onClick={() => handleSelectAnswer(index)}
                 className={`w-full text-left p-4 rounded-xl border-2 transition-all ${selectedAnswer === index ? 'border-primary bg-primary/10' :
-                    'border-border hover:border-primary/50'
+                  'border-border hover:border-primary/50'
                   }`}
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-semibold ${selectedAnswer === index ? 'bg-primary text-primary-foreground' :
-                      'bg-muted text-muted-foreground'
+                    'bg-muted text-muted-foreground'
                     }`}>
                     {['A', 'B', 'C', 'D'][index]}
                   </div>

@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Timer from "@/components/techprep/Timer";
 import ProgressBar from "@/components/techprep/ProgressBar";
 import QuestionCard from "@/components/techprep/QuestionCard";
-import { Code2 } from "lucide-react";
+import { Code2, AlertCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 
 interface Question {
     id: number;
@@ -19,6 +21,9 @@ const TechPrepTest = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [loading, setLoading] = useState(true);
+    const [tabSwitchCount, setTabSwitchCount] = useState(0);
+    const [showTabWarning, setShowTabWarning] = useState(false);
+
 
     // Fetch Questions
     useEffect(() => {
@@ -37,6 +42,46 @@ const TechPrepTest = () => {
 
         loadQuestions();
     }, []);
+
+    // Tab switch warning
+    useEffect(() => {
+        if (loading || questions.length === 0) return;
+
+        const handleTabSwitch = () => {
+            setTabSwitchCount(prev => {
+                const newCount = prev + 1;
+                console.log(`[TechPrep] Tab switch detected. Total: ${newCount}`);
+
+                if (newCount > 5) {
+                    alert("Violated tab switch limit (5 times). The test will now submit.");
+                    submitTest(answers);
+                    return newCount;
+                }
+                setShowTabWarning(true);
+                return newCount;
+            });
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                handleTabSwitch();
+            }
+        };
+
+        const handleBlur = () => {
+            if (!document.hidden) {
+                handleTabSwitch();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleBlur);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleBlur);
+        };
+    }, [loading, questions, answers]);
 
     // Submit Test
     const submitTest = async (
@@ -111,6 +156,23 @@ const TechPrepTest = () => {
 
     return (
         <div className="min-h-screen bg-slate-50">
+            <AlertDialog open={showTabWarning} onOpenChange={setShowTabWarning}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Warning: Tab Switch Detected</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You have switched tabs or minimized the window. Please stay on this page during the assessment.
+                            Multiple tab switches may result in automatic submission.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setShowTabWarning(false)}>
+                            I Understand
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {/* Header */}
             <div className="sticky top-0 bg-white border-b z-10">
                 <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">

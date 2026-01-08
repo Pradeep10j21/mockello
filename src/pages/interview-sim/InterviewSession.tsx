@@ -89,81 +89,204 @@ const InterviewSession = () => {
     // --- Media Handlers ---
     const startCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
+            // If we already have a stream, check if tracks are active
+            if (streamRef.current) {
+                const videoTracks = streamRef.current.getVideoTracks();
+                const audioTracks = streamRef.current.getAudioTracks();
+
+                const hasLiveVideo = videoTracks.length > 0 && videoTracks[0].readyState === 'live';
+                const hasLiveAudio = audioTracks.length > 0 && audioTracks[0].readyState === 'live';
+
+                if (hasLiveVideo && hasLiveAudio) {
+                    console.log("[Session] Both audio and video tracks already active");
+                    setCameraOn(true);
+                    return;
+                }
             }
-            setCameraOn(true);
+
+            console.log("[Session] Requesting media stream (Video + Audio)...");
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                streamRef.current = stream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                }
+                setCameraOn(true);
+            } catch (videoErr) {
+                console.warn("[Session] Camera access denied or failed, falling back to Audio only...", videoErr);
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                streamRef.current = audioStream;
+                setCameraOn(false);
+                toast({
+                    title: "Camera Access Refused",
+                    description: "Proceeding with Audio only. Please enable camera permission if preferred.",
+                    variant: "default"
+                });
+            }
         } catch (err) {
-            console.error("Camera error:", err);
+            console.error("[Session] Media access error:", err);
+            toast({
+                title: "Media Error",
+                description: "Cannot access camera or microphone. Please check system permissions.",
+                variant: "destructive"
+            });
             setCameraOn(false);
         }
     };
 
     const stopCamera = () => {
         if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
+            // Only stop video tracks, keep audio tracks for recording
+            streamRef.current.getVideoTracks().forEach(track => {
+                track.stop();
+                console.log("[Session] Video track stopped");
+            });
+            setCameraOn(false);
         }
     };
 
-    const toggleCamera = () => {
+    const toggleCamera = async () => {
         if (cameraOn) {
             stopCamera();
-            setCameraOn(false);
         } else {
-            startCamera();
+            console.log("[Session] Manually triggering camera start...");
+            await startCamera();
         }
+    };
+
+    const retryCamera = async () => {
+        console.log("[Session] User requested camera retry...");
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+        await startCamera();
     };
 
     // --- Recording Logic ---
-    const startRecording = () => {
-        if (!streamRef.current) {
+    const startRecording = async (retryCount = 0) => {
+        console.log(`[Session] startRecording triggered (retry: ${retryCount})`);
+
+        // Ensure stream is active and has audio
+        let stream = streamRef.current;
+        const isStreamDead = !stream || !stream.active || stream.getAudioTracks().every(t => t.readyState === 'ended');
+
+        if (isStreamDead) {
+            console.log("[Session] Stream missing or inactive, re-requesting...");
+            try {
+                // Determine if we should attempt video based on cameraOn state or initial intent
+                // However, for stability during recording, we focus on audio
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true },
+                    video: cameraOn
+                });
+                streamRef.current = stream;
+                if (videoRef.current && cameraOn) {
+                    videoRef.current.srcObject = stream;
+                }
+            } catch (err) {
+                console.warn("[Session] Failed to re-acquire media with video, trying audio only...", err);
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: true, noiseSuppression: true }
+                    });
+                    streamRef.current = stream;
+                    setCameraOn(false);
+                } catch (audioErr) {
+                    console.error("[Session] Final media acquisition failure:", audioErr);
+                    toast({
+                        title: "Microphone Error",
+                        description: "Cannot access microphone. Please check permissions.",
+                        variant: "destructive"
+                    });
+                    return;
+                }
+            }
+        }
+
+        if (!stream) return;
+
+        const audioTrack = stream.getAudioTracks()[0];
+        if (!audioTrack || audioTrack.readyState !== 'live') {
+            console.error("[Session] No active audio track found");
+            if (retryCount < 1) return startRecording(retryCount + 1);
+
             toast({
                 title: "Microphone Error",
-                description: "Cannot access microphone. Please check permissions.",
+                description: "No active microphone track found. Please refresh.",
                 variant: "destructive"
             });
             return;
         }
 
+        // Ensure audio track is enabled
+        audioTrack.enabled = true;
+
         // Stop AI speech if interrupted
         stopSpeaking();
 
         try {
-            // Select supported MIME type
-            const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4', ''];
-            const mimeType = types.find(t => t === '' || MediaRecorder.isTypeSupported(t));
+            // CRITICAL: Create an AUDIO-ONLY stream for the recorder
+            // This prevents video track shifts or state changes from breaking the recorder
+            const audioOnlyStream = new MediaStream([audioTrack]);
 
-            console.log(`[Session] Starting MediaRecorder with mimeType: ${mimeType || 'default'}`);
-            const mediaRecorder = new MediaRecorder(streamRef.current, mimeType ? { mimeType } : undefined);
+            // Select supported MIME type
+            const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+            const mimeType = types.find(t => MediaRecorder.isTypeSupported(t));
+
+            console.log(`[Session] Initializing MediaRecorder with mimeType: ${mimeType || 'browser-default'}`);
+
+            // Clean up old recorder if it exists
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                try { mediaRecorderRef.current.stop(); } catch (e) { }
+            }
+
+            const mediaRecorder = new MediaRecorder(audioOnlyStream, mimeType ? { mimeType } : undefined);
             mediaRecorderRef.current = mediaRecorder;
             audioChunksRef.current = [];
 
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
-                    console.log(`[Session] Received chunk: ${event.data.size} bytes`);
                     audioChunksRef.current.push(event.data);
                 }
             };
 
             mediaRecorder.onstop = async () => {
-                const mimeType = mediaRecorder.mimeType || 'audio/webm';
-                console.log(`[Session] Stopped. Mime: ${mimeType}, Chunks: ${audioChunksRef.current.length}`);
+                const usedMimeType = mediaRecorder.mimeType || 'audio/webm';
+                console.log(`[Session] Recorder stopped. Chunks: ${audioChunksRef.current.length}`);
 
-                if (audioChunksRef.current.length === 0) return;
+                if (audioChunksRef.current.length === 0) {
+                    console.warn("[Session] No audio captured. Possible hardware issue.");
+                    return;
+                }
 
-                const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+                const audioBlob = new Blob(audioChunksRef.current, { type: usedMimeType });
                 await processUserAudio(audioBlob);
             };
 
+            // Small delay to ensure stream state is stable
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             mediaRecorder.start();
             setIsRecording(true);
+            console.log("[Session] Recording started successfully");
+
         } catch (err) {
             console.error("[Session] MediaRecorder start failed:", err);
+
+            // Self-healing: if it fails, try to reset the whole stream once
+            if (retryCount < 1) {
+                console.log("[Session] Retrying recording with fresh stream...");
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(t => t.stop());
+                }
+                streamRef.current = null;
+                return startRecording(retryCount + 1);
+            }
+
             toast({
                 title: "Recording Failed",
-                description: "Could not start recording.",
+                description: `Error: ${err instanceof Error ? err.message : 'Unknown'}. Please try refreshing the page.`,
                 variant: "destructive"
             });
         }
@@ -421,8 +544,17 @@ const InterviewSession = () => {
                                 className="w-full h-full object-cover transform scale-x-[-1]"
                             />
                             {!cameraOn && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a1a] text-white/50">
-                                    <VideoOff className="w-8 h-8" />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a] text-white/50 p-4 text-center">
+                                    <VideoOff className="w-8 h-8 mb-2" />
+                                    <p className="text-xs mb-3">Camera is off or unavailable</p>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-[10px] h-7 border-white/20 hover:bg-white/10"
+                                        onClick={retryCamera}
+                                    >
+                                        Retry Camera
+                                    </Button>
                                 </div>
                             )}
                         </div>
@@ -449,7 +581,7 @@ const InterviewSession = () => {
                                         ? 'bg-red-500 hover:bg-red-600 scale-110 ring-4 ring-red-500/30'
                                         : 'bg-[#0F2C1F] hover:bg-[#1a3f2d] hover:scale-105'
                                         }`}
-                                    onClick={isRecording ? stopRecording : startRecording}
+                                    onClick={isRecording ? stopRecording : () => startRecording(0)}
                                     disabled={isProcessing}
                                 >
                                     {isRecording ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}
