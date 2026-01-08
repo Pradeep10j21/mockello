@@ -6,6 +6,7 @@ import os
 # Prefer loading a local backend/.env for development (do NOT commit real keys)
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from backend.routers import student, college, company, admin
 
@@ -61,6 +62,22 @@ app.include_router(interview_room.router)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Mockello MVP API"}
+
+
+@app.get("/favicon.ico")
+def favicon():
+    # Serve the frontend favicon/logo so requests to backend favicon don't 404
+    candidates = []
+    # package-relative: project_root/public/logo.png
+    candidates.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "public", "logo.png")))
+    # cwd-relative: <cwd>/public/logo.png (useful when server started from project root)
+    candidates.append(os.path.abspath(os.path.join(os.getcwd(), "public", "logo.png")))
+
+    for p in candidates:
+        if os.path.exists(p):
+            return FileResponse(p)
+
+    return {"detail": "not found"}
 
 @app.get("/fix-login")
 def fix_login():
