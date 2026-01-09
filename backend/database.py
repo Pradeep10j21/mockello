@@ -1,8 +1,11 @@
+import os
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
-# MongoDB Atlas URI provided by the user
-URI = "mongodb+srv://pradeepsathish822_db_user:dwLrFrHiyU2IhlCL@cluster0.ftarsv1.mongodb.net/?appName=Cluster0"
+# Use environment variable for MongoDB URI, fallback to hardcoded only if provided in env or code
+DEFAULT_URI = "mongodb+srv://pradeepsathish822_db_user:dwLrFrHiyU2IhlCL@cluster0.ftarsv1.mongodb.net/?appName=Cluster0"
+URI = os.getenv("MONGODB_URI", DEFAULT_URI)
+
 
 class Database:
     client: MongoClient = None

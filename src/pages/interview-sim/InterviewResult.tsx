@@ -222,8 +222,8 @@ const InterviewResult = () => {
                             </div>
 
                             <div className="mt-8 pt-6 border-t border-white/5 space-y-3">
-                                <Button className="w-full h-12 text-lg font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" onClick={() => navigate('/hr-interview-panel', { state: { role: 'candidate' } })}>
-                                    <Users className="w-5 h-5 mr-2" /> Next Round (HR Interview)
+                                <Button className="w-full h-12 text-lg font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" onClick={() => navigate('/hr-interview-panel?role=candidate&session=final_test')}>
+                                    <Users className="w-5 h-5 mr-2" /> Proceed to HR Interview
                                 </Button>
                                 <Button className="w-full h-12 text-lg font-semibold bg-white text-black hover:bg-gray-200" onClick={() => navigate('/interview')}>
                                     <RefreshCw className="w-5 h-5 mr-2" /> Start New Interview

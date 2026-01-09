@@ -78,6 +78,12 @@ import CompanySelection from "./pages/interview/CompanySelection";
 import InterviewPage from "./pages/interview/InterviewPage";
 import ResultPage from "./pages/interview/ResultPage";
 
+// Technical Interview Module (External)
+import TechnicalInterviewLandingPage from "./pages/technical-interview/InterviewLandingPage";
+import TechnicalCompanySelection from "./pages/technical-interview/CompanySelection";
+import TechnicalInterviewPage from "./pages/technical-interview/InterviewPage";
+import TechnicalResultPage from "./pages/technical-interview/ResultPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -149,7 +155,16 @@ const App = () => (
           <Route path="/techprep/test" element={<TechPrepTest />} />
           <Route path="/techprep/results" element={<TechPrepResults />} />
 
-          {/* Interview Simulator Routes (New Integration) */}
+          {/* Technical Interview Module (External Integration) */}
+          <Route path="/technical-interview" element={<TechnicalInterviewLandingPage />} />
+          <Route path="/technical-interview/select" element={<TechnicalCompanySelection />} />
+          <Route path="/technical-interview/:companyId" element={<TechnicalInterviewPage />} />
+          <Route path="/technical-interview/result" element={<TechnicalResultPage />} />
+
+          {/* AI Interview Route (Part of Mock Placement Flow) */}
+          <Route path="/ai-interview" element={<InterviewSetup />} />
+
+          {/* Interview Simulator Routes (Standalone) */}
           <Route path="/interview" element={<InterviewSetup />} />
           <Route path="/interview/session" element={<InterviewSession />} />
           <Route path="/interview/result" element={<InterviewResult />} /> {/* Result Page */}

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getCompanyData } from '@/lib/companyStore';
@@ -25,8 +27,8 @@ const InterviewPerformance = () => {
             if (!companyData?.hrEmail) return;
 
             try {
-                // In production, use environment variable for base URL
-                const response = await fetch(`http://localhost:8000/company/interview-results/${companyData.hrEmail}`);
+                const response = await fetch(`${API_BASE_URL}/company/interview-results/${companyData.hrEmail}`);
+
                 if (response.ok) {
                     const data = await response.json();
                     setResults(data);

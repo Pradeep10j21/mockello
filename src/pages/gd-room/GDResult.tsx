@@ -271,11 +271,11 @@ export default function GDResult() {
           className="text-center pt-4"
         >
           <Button
-            onClick={() => navigate('/hr-interview-panel?role=candidate&session=final_test')}
+            onClick={() => navigate('/technical-interview')}
             size="lg"
             className="bg-emerald-600 text-white hover:bg-emerald-700 px-8 rounded-xl shadow-lg border-0"
           >
-            Proceed to Personal Interview
+            Proceed to Technical Interview
           </Button>
         </motion.div>
       </div>

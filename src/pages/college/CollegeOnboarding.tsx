@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +37,8 @@ const CollegeOnboarding = () => {
       console.log("Submitting onboarding for:", email);
       console.log("Payload:", { email, ...formData });
 
-      const response = await fetch("http://localhost:8000/college/onboarding", {
+      const response = await fetch(`${API_BASE_URL}/college/onboarding`, {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",

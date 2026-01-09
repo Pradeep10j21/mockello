@@ -1,23 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useSpeechToText } from '../../hooks/interview/useSpeechToText';
-import { API_BASE_URL } from '../../services/apiConfig';
-
 import './VideoInterview.css';
-import Peer from 'peerjs';
 
-function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpdate, onAnswerComplete, canProceed }) {
+function VideoInterview({ isActive, isAISpeaking, currentQuestionIndex, onStart, onStop, onTranscriptUpdate, onAnswerComplete, canProceed }) {
   const [stream, setStream] = useState(null);
   const [timer, setTimer] = useState(0);
   const [silenceTimer, setSilenceTimer] = useState(0);
   const videoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const peerRef = useRef(null);
-  const currentCallRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const silenceIntervalRef = useRef(null);
   const lastTranscriptLengthRef = useRef(0);
-  const joinPollRef = useRef(null);
-  const joinedRef = useRef(false);
 
   const {
     transcript,
@@ -26,8 +18,17 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
     isSupported,
     startListening,
     stopListening,
-    resetTranscript
+    resetTranscript,
+    abortListening
   } = useSpeechToText();
+
+  // Reset transcript when question changes
+  useEffect(() => {
+    // Force abort to clear the recognition session history
+    abortListening();
+    setSilenceTimer(0);
+    lastTranscriptLengthRef.current = 0;
+  }, [currentQuestionIndex, abortListening]);
 
   const transcriptRef = useRef(null);
 
@@ -53,14 +54,9 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
       setSilenceTimer(0);
       lastTranscriptLengthRef.current = 0;
 
-      // Restart listening after a short delay
-      setTimeout(() => {
-        if (isActive) {
-          startListening();
-        }
-      }, 1500);
+      // Removed the setTimeout restart - relying on the useEffect to manage mic state
     }
-  }, [transcript, stopListening, onAnswerComplete, resetTranscript, isActive, startListening]);
+  }, [transcript, stopListening, onAnswerComplete, resetTranscript]);
 
   // Improved auto-advance logic with silence detection
   useEffect(() => {
@@ -95,10 +91,35 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
+      // Clear previous error
+      if (error && error.includes('camera')) {
+        // Reset error state if it was related to camera
+        // We can't clear specific errors easily with current hook, so we leave it 
+        // to the user to retry or the UI to handle
+      }
+
+      let mediaStream;
+      try {
+        // First try to get both video and audio
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+      } catch (err) {
+        console.warn('Failed to get video+audio, trying audio only...', err);
+        // Fallback to audio only if video fails (e.g. no camera)
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: true
+          });
+          // Show a non-blocking toast or message about video being unavailable?
+          // For now, we proceed with audio-only.
+        } catch (audioErr) {
+          throw audioErr; // Throw original or new error to outer catch
+        }
+      }
+
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -106,126 +127,35 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
       return Promise.resolve();
     } catch (error) {
       console.error('Error accessing camera/microphone:', error);
-      alert('Please allow camera and microphone access to continue.');
+
+      let errorMessage = 'Failed to access microphone. Please check permissions.';
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Access denied. Please explicitly allow camera/microphone permissions in your browser settings (look for the icon in the URL bar).';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No microphone found. Please connect a microphone to continue.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = 'Hardware error. Your microphone might be in use by another application.';
+      }
+
+      // Instead of alert, we could set a state to show a friendly modal, 
+      // but since we don't have a new UI state for this yet, we will use a more descriptive alert 
+      // OR better, we simply don't alert and let the UI show the error state we already have (the mic indicator shows error).
+      // However, the user specifically complained about the alert.
+      // We will set the error in the speech hook if possible? 
+      // The speech hook manages its own error state. we might need a local error state for camera.
+
+      // For now, let's remove the alert and rely on the UI indicators if possible, 
+      // but 'alert' is the only way to stop proceed if we return Promise.reject WITHOUT UI feedback.
+      // Let's rely on the return Promise.reject to stop the flow, and maybe use a toast if available?
+      // Attempting to just suppress the alert may leave user confused why it didn't start.
+      // I will leave a console error and maybe a nicer alert if I must, or just NO alert but I must verify UI shows error.
+
+      // The current UI line 264 shows {error && <div className="error-tooltip">{error}</div>}
+      // But that error comes from useSpeechToText.
+
+      alert(errorMessage); // Keeping alert for now but making it helpful, as I cannot easily add a Modal without larger refactor.
+
       return Promise.reject(error);
-    }
-  };
-
-  // Initialize PeerJS when component mounts
-  useEffect(() => {
-    try {
-      const peer = new Peer();
-      peerRef.current = peer;
-
-      peer.on('open', (id) => {
-        console.log('Peer open with id', id);
-      });
-
-      // When another peer calls us, answer with our stream and play their stream
-      peer.on('call', async (call) => {
-        console.log('Incoming call', call);
-        // Ensure we have camera ready
-        try {
-          if (!stream) {
-            await startCamera();
-          }
-          call.answer(stream);
-        } catch (err) {
-          console.error('Failed to answer call', err);
-        }
-
-        call.on('stream', (remoteStream) => {
-          currentCallRef.current = call;
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteStream;
-          }
-        });
-      });
-
-      peer.on('error', (err) => {
-        console.warn('Peer error', err);
-      });
-    } catch (e) {
-      console.warn('PeerJS init failed', e);
-    }
-
-    return () => {
-      if (peerRef.current) {
-        try { peerRef.current.destroy(); } catch (e) { }
-        peerRef.current = null;
-      }
-    };
-  }, []);
-
-  // Helper to call a remote peer id
-  const callRemotePeer = async (remoteId) => {
-    if (!peerRef.current) {
-      alert('Peer not initialized');
-      return;
-    }
-    try {
-      if (!stream) {
-        await startCamera();
-      }
-      const call = peerRef.current.call(remoteId, stream);
-      currentCallRef.current = call;
-      call.on('stream', (remoteStream) => {
-        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
-      });
-      call.on('close', () => {
-        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-      });
-    } catch (err) {
-      console.error('Error calling remote peer', err);
-      alert('Failed to call remote peer: ' + (err.message || err));
-    }
-  };
-
-  const registerToRoom = async () => {
-    try {
-      const peer = peerRef.current;
-      if (!peer || !peer.id) {
-        console.log('Peer id not ready yet');
-        return;
-      }
-      if (!companyId) {
-        console.log('No companyId provided, skipping room join');
-        return;
-      }
-
-      const res = await fetch(`${API_BASE_URL}/interview/room/join`, {
-
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyId, peerId: peer.id })
-      });
-      const data = await res.json();
-      const others = data.peers || [];
-      if (others.length > 0) {
-        // call first available peer
-        callRemotePeer(others[0].peerId);
-        joinedRef.current = true;
-      } else {
-        // start polling for other peers
-        if (joinPollRef.current) clearInterval(joinPollRef.current);
-        joinPollRef.current = setInterval(async () => {
-          try {
-            const r = await fetch(`${API_BASE_URL}/interview/room/${companyId}/peers`);
-
-            const j = await r.json();
-            const peers = j.peers || [];
-            const other = peers.find(p => p.peerId !== peer.id);
-            if (other) {
-              callRemotePeer(other.peerId);
-              joinedRef.current = true;
-              clearInterval(joinPollRef.current);
-              joinPollRef.current = null;
-            }
-          } catch (e) { console.warn('poll error', e); }
-        }, 2000);
-      }
-    } catch (e) {
-      console.warn('Failed to register to room', e);
     }
   };
 
@@ -271,14 +201,6 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
       setTimeout(() => {
         startListening();
       }, 100);
-      // attach local stream to peer if peer exists
-      if (peerRef.current && stream) {
-        // nothing to do: PeerJS uses getUserMedia streams when calling/answering
-      }
-      // register to room so other peer can be discovered and auto-called
-      setTimeout(() => {
-        registerToRoom();
-      }, 200);
     } catch (error) {
       console.error('Error starting interview:', error);
       if (error.name === 'NotAllowedError') {
@@ -304,15 +226,6 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
     setSilenceTimer(0);
     lastTranscriptLengthRef.current = 0;
     resetTranscript();
-    // close any active call
-    try {
-      if (currentCallRef.current) {
-        currentCallRef.current.close();
-        currentCallRef.current = null;
-      }
-    } catch (e) { }
-    // clear join poll
-    try { if (joinPollRef.current) clearInterval(joinPollRef.current); } catch (e) { }
   };
 
   useEffect(() => {
@@ -345,6 +258,26 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
     };
   }, []);
 
+  useEffect(() => {
+    let timeoutId;
+
+    if (isActive) {
+      if (isAISpeaking) {
+        stopListening();
+      } else {
+        // Debounce restart to allow time for isAISpeaking to update
+        // This prevents the mic from briefly turning on between questions
+        timeoutId = setTimeout(() => {
+          startListening();
+        }, 500);
+      }
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isAISpeaking, isActive, startListening, stopListening]);
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -360,12 +293,6 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
           playsInline
           muted
           className="video-preview"
-        />
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          className="video-remote"
         />
         {!stream && (
           <div className="video-placeholder">
@@ -419,9 +346,6 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
           placeholder="Your speech will appear here... Speak clearly and naturally."
           autoFocus={false}
         />
-        <div style={{ marginTop: 12 }}>
-          <PeerControls peerRef={peerRef} onCall={callRemotePeer} />
-        </div>
         {isActive && transcript.trim().length > 0 && (
           <div className="transcript-footer">
             <div className="transcript-footer-left">
@@ -445,50 +369,4 @@ function VideoInterview({ companyId, isActive, onStart, onStop, onTranscriptUpda
 }
 
 export default VideoInterview;
-
-// Small inline component for peer ID display and connect field
-function PeerControls({ peerRef, onCall }) {
-  const [remoteId, setRemoteId] = useState('');
-  const [myId, setMyId] = useState('');
-
-  useEffect(() => {
-    const peer = peerRef.current;
-    if (!peer) return;
-    const handleOpen = (id) => setMyId(id);
-    if (peer.id) setMyId(peer.id);
-    peer.on('open', handleOpen);
-    return () => {
-      try { peer.off('open', handleOpen); } catch (e) { }
-    };
-  }, [peerRef]);
-
-  const handleCopy = () => {
-    if (myId) navigator.clipboard?.writeText(myId);
-  };
-
-  const handleConnect = () => {
-    if (!remoteId) return alert('Enter remote peer id');
-    onCall(remoteId.trim());
-  };
-
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, color: '#666' }}>Your Peer ID</div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-          <input readOnly value={myId || ''} style={{ flex: 1, padding: 8 }} />
-          <button onClick={handleCopy} style={{ padding: '8px 12px' }}>Copy</button>
-        </div>
-      </div>
-
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, color: '#666' }}>Connect to Peer ID</div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-          <input value={remoteId} onChange={(e) => setRemoteId(e.target.value)} placeholder="remote peer id" style={{ flex: 1, padding: 8 }} />
-          <button onClick={handleConnect} style={{ padding: '8px 12px' }}>Call</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 

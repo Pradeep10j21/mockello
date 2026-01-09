@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "@/components/AdminSidebar";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { GraduationCap, Building2, Users, Clock, TrendingUp, CheckCircle, XCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -53,9 +55,10 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       try {
         const [collegesRes, companiesRes] = await Promise.all([
-          fetch("http://localhost:8000/admin/pending-colleges"),
-          fetch("http://localhost:8000/admin/pending-companies")
+          fetch(`${API_BASE_URL}/admin/pending-colleges`),
+          fetch(`${API_BASE_URL}/admin/pending-companies`)
         ]);
+
 
         if (collegesRes.ok) {
           const data = await collegesRes.json();
@@ -92,7 +95,8 @@ const AdminDashboard = () => {
 
   const handleApproveCollege = async (email: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/admin/verify-college/${email}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/verify-college/${email}`, {
+
         method: "POST"
       });
       if (response.ok) {
@@ -114,7 +118,8 @@ const AdminDashboard = () => {
 
   const handleApproveCompany = async (email: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/admin/verify-company/${email}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/verify-company/${email}`, {
+
         method: "POST"
       });
       if (response.ok) {

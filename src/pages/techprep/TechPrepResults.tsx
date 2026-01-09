@@ -181,8 +181,8 @@ const TechPrepResults = () => {
                                 <h3 className="text-xl font-bold mb-2">Pro Tip for Your Next Round</h3>
                                 <p className="text-emerald-100">
                                     {percentage >= 70
-                                        ? "You're ready for the Group Discussion! Focus on communicating your ideas clearly and listening actively to others."
-                                        : `Before proceeding, we recommend reviewing ${getWeakestSection()} concepts. Strong fundamentals will give you confidence in technical discussions.`
+                                        ? "You've successfully cleared the technical round! Proceed to the Group Discussion room for the next stage."
+                                        : `Before proceeding, we recommend reviewing ${getWeakestSection()} concepts. Strong technical skills are key for the upcoming rounds.`
                                     }
                                 </p>
                             </div>
@@ -214,7 +214,7 @@ const TechPrepResults = () => {
                                 }`}
                             onClick={() => {
                                 if (percentage >= PASS_THRESHOLD || proceedClicks >= 5) {
-                                    navigate("/gd-portal/waiting-room");
+                                    navigate("/gd-portal");
                                 } else {
                                     const newClicks = proceedClicks + 1;
                                     setProceedClicks(newClicks);

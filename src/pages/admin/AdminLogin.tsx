@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +18,8 @@ const AdminLogin = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:8000/admin/login", {
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

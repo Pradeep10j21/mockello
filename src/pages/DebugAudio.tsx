@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { groqService } from '@/services/groqService';
+import { API_BASE_URL } from '@/services/apiConfig';
+
 
 const DebugAudio = () => {
     const [logs, setLogs] = useState<string[]>([]);
@@ -18,8 +20,9 @@ const DebugAudio = () => {
 
         // 1. Check Backend Connectivity
         try {
-            addLog("Pinging Backend (http://127.0.0.1:8000/)...");
-            const res = await fetch("http://127.0.0.1:8000/");
+            addLog(`Pinging Backend (${API_BASE_URL}/)...`);
+            const res = await fetch(`${API_BASE_URL}/`);
+
             if (res.ok) addLog("Backend Online: " + res.status);
             else addLog("Backend Error: " + res.status);
         } catch (e) {

@@ -1,4 +1,6 @@
 import { toast } from 'sonner';
+import { API_BASE_URL } from './apiConfig';
+
 
 export interface GroqMessage {
     role: 'system' | 'user' | 'assistant';
@@ -20,7 +22,7 @@ export const groqService = {
 
         try {
             console.log(`[GroqService] Sending ${audioBlob.size} bytes to Backend Proxy...`);
-            const response = await fetch('http://127.0.0.1:8000/ai-interviewer/transcribe', {
+            const response = await fetch(`${API_BASE_URL}/ai-interviewer/transcribe`, {
                 method: 'POST',
                 // No headers needed, browser sets Content-Type for FormData
                 body: formData,
@@ -48,7 +50,7 @@ export const groqService = {
         try {
             // Forward the chat request to the backend proxy so the Groq API key stays server-side.
             console.log("Forwarding chat request to backend proxy...", messages);
-            const response = await fetch("http://127.0.0.1:8000/groq/chat", {
+            const response = await fetch(`${API_BASE_URL}/ai-interviewer/chat`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

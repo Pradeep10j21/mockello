@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../services/apiConfig';
+
 import { ArrowRight, Clock, CheckCircle, Sparkles, Trophy, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AssessmentPhase, UserAnswer } from '@/types/assessment';
@@ -31,7 +33,8 @@ const MockPlacementAssessment = () => {
   const fetchQuestions = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/aptitude/test');
+      const response = await fetch(`${API_BASE_URL}/aptitude/test`);
+
       if (!response.ok) throw new Error('Failed to fetch questions');
       const data = await response.json();
       setQuestions(data);

@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import Timer from "@/components/techprep/Timer";
 import ProgressBar from "@/components/techprep/ProgressBar";
 import QuestionCard from "@/components/techprep/QuestionCard";
@@ -29,7 +31,8 @@ const TechPrepTest = () => {
     useEffect(() => {
         const loadQuestions = async () => {
             try {
-                const res = await fetch("http://localhost:8000/techprep/questions");
+                const res = await fetch(`${API_BASE_URL}/techprep/questions`);
+
                 const data = await res.json();
                 console.log("QUESTIONS LOADED:", data);
                 setQuestions(data);
@@ -93,7 +96,8 @@ const TechPrepTest = () => {
                 Object.entries(finalAnswers).map(([k, v]) => [String(k), v])
             );
 
-            const res = await fetch("http://localhost:8000/techprep/submit", {
+            const res = await fetch(`${API_BASE_URL}/techprep/submit`, {
+
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

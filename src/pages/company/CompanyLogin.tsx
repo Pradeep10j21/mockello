@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { Leaf, Mail, Lock, Eye, EyeOff, Building2, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +32,8 @@ const CompanyLogin = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/company/login", {
+      const response = await fetch(`${API_BASE_URL}/company/login`, {
+
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
@@ -88,7 +91,8 @@ const CompanyLogin = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/company/register", {
+      const response = await fetch(`${API_BASE_URL}/company/register`, {
+
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

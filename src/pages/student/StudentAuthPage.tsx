@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, GraduationCap, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,8 +42,9 @@ const StudentAuthPage = () => {
 
     try {
       const endpoint = mode === "login"
-        ? "http://localhost:8000/student/login"
-        : "http://localhost:8000/student/register";
+        ? `${API_BASE_URL}/student/login`
+        : `${API_BASE_URL}/student/register`;
+
 
       const payload = mode === "login"
         ? { email: formData.email, password: formData.password }

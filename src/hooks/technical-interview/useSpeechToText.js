@@ -7,6 +7,8 @@ export function useSpeechToText() {
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef(null);
   const restartTimeoutRef = useRef(null);
+  const shouldListenRef = useRef(false);
+  const isResettingRef = useRef(false);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -28,9 +30,16 @@ export function useSpeechToText() {
       console.log('Speech recognition started');
       setIsListening(true);
       setError(null);
+      isResettingRef.current = false;
     };
 
     recognition.onresult = (event) => {
+      // Strictly ignore results if we shouldn't be listening or are resetting
+      if (!shouldListenRef.current || isResettingRef.current) {
+        console.log('Ignoring speech result: shouldListen=', shouldListenRef.current, 'isResetting=', isResettingRef.current);
+        return;
+      }
+
       let interimTranscript = '';
       let finalTranscript = '';
 
@@ -63,34 +72,39 @@ export function useSpeechToText() {
 
       if (event.error === 'no-speech') {
         setIsListening(false);
-        // Auto-restart after no-speech
+        // Auto-restart after no-speech ONLY if we're supposed to be listening
         if (restartTimeoutRef.current) {
           clearTimeout(restartTimeoutRef.current);
         }
-        restartTimeoutRef.current = setTimeout(() => {
-          if (recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {
-              console.error('Failed to restart recognition:', e);
+        if (shouldListenRef.current) {
+          restartTimeoutRef.current = setTimeout(() => {
+            if (recognitionRef.current && shouldListenRef.current) {
+              try {
+                recognitionRef.current.start();
+              } catch (e) {
+                console.error('Failed to restart recognition:', e);
+              }
             }
-          }
-        }, 1000);
+          }, 1000);
+        }
       } else if (event.error === 'not-allowed') {
         setIsListening(false);
+        shouldListenRef.current = false;
         alert('Microphone permission denied. Please allow microphone access and refresh the page.');
       } else if (event.error === 'network') {
         setIsListening(false);
-        // Try to restart after network error
-        setTimeout(() => {
-          if (recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {
-              console.error('Failed to restart after network error:', e);
+        // Try to restart after network error if we're supposed to be listening
+        if (shouldListenRef.current) {
+          setTimeout(() => {
+            if (recognitionRef.current && shouldListenRef.current) {
+              try {
+                recognitionRef.current.start();
+              } catch (e) {
+                console.error('Failed to restart after network error:', e);
+              }
             }
-          }
-        }, 2000);
+          }, 2000);
+        }
       } else {
         setIsListening(false);
       }
@@ -99,21 +113,19 @@ export function useSpeechToText() {
     recognition.onend = () => {
       console.log('Speech recognition ended');
       setIsListening(false);
-      // Auto-restart if continuous mode is enabled
-      // Only restart if we're still supposed to be listening
-      if (recognitionRef.current && recognitionRef.current.continuous) {
+      // Auto-restart if continuous mode is enabled and we should be listening
+      if (recognitionRef.current && recognitionRef.current.continuous && shouldListenRef.current) {
         // Reduced delay for faster restart
         if (restartTimeoutRef.current) {
           clearTimeout(restartTimeoutRef.current);
         }
         restartTimeoutRef.current = setTimeout(() => {
           try {
-            if (recognitionRef.current) {
+            if (recognitionRef.current && shouldListenRef.current) {
               recognitionRef.current.start();
             }
           } catch (error) {
             console.error('Error restarting recognition:', error);
-            // If start fails, it might already be started, so ignore
           }
         }, 100);
       }
@@ -122,6 +134,7 @@ export function useSpeechToText() {
     recognitionRef.current = recognition;
 
     return () => {
+      shouldListenRef.current = false;
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -137,30 +150,19 @@ export function useSpeechToText() {
       return;
     }
 
+    shouldListenRef.current = true;
     if (recognitionRef.current && !isListening) {
       try {
         setError(null);
         recognitionRef.current.start();
       } catch (error) {
         console.error('Error starting recognition:', error);
-        if (error.name === 'InvalidStateError') {
-          // Recognition might already be started, try to stop and restart
-          try {
-            recognitionRef.current.stop();
-            setTimeout(() => {
-              if (recognitionRef.current) {
-                recognitionRef.current.start();
-              }
-            }, 100);
-          } catch (e) {
-            console.error('Failed to restart recognition:', e);
-          }
-        }
       }
     }
   }, [isSupported, isListening]);
 
   const stopListening = useCallback(() => {
+    shouldListenRef.current = false;
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -170,7 +172,14 @@ export function useSpeechToText() {
     }
   }, [isListening]);
 
+  const resetTranscript = useCallback(() => {
+    setTranscript('');
+    setError(null);
+  }, []);
+
   const abortListening = useCallback(() => {
+    shouldListenRef.current = false;
+    isResettingRef.current = true;
     if (recognitionRef.current) {
       recognitionRef.current.abort();
       setIsListening(false);
@@ -178,9 +187,6 @@ export function useSpeechToText() {
     if (restartTimeoutRef.current) {
       clearTimeout(restartTimeoutRef.current);
     }
-  }, []);
-
-  const resetTranscript = useCallback(() => {
     setTranscript('');
     setError(null);
   }, []);

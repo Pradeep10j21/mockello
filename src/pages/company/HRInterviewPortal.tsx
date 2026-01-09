@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Users, UserCheck, FileText, ChevronRight, Save, CheckCircle, MessageSquare, Signal, Settings, Volume2, Send, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_BASE_URL } from '@/services/apiConfig';
+
 import { getCompanyData } from '@/lib/companyStore';
 import { whisperService } from '@/services/whisperService';
 
@@ -431,7 +433,8 @@ const HRInterviewPortal = () => {
     const handleSaveNotes = async () => {
         setIsSaving(true);
         try {
-            const resp = await fetch('http://localhost:8000/company/interview-result', {
+            const resp = await fetch(`${API_BASE_URL}/company/interview-result`, {
+
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -549,7 +552,7 @@ const HRInterviewPortal = () => {
                         <p className="text-xs text-[#3b6b55] mt-0.5">Siddharth J. Srivastava | Software Engineer | resume-1052-04.647407.mp4</p>
                     </div>
                 </div>
-                    <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
                         <span className="text-xs font-semibold text-[#18543d]">LIVE</span>

@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import {
   Leaf, Building2, User, FileText, ChevronRight, ChevronLeft, Check,
   MapPin, Globe, Phone, Mail, Users, Briefcase, Calendar, Award, Upload, X
@@ -264,7 +266,8 @@ const CompanyOnboarding = () => {
         return;
       }
 
-      const response = await fetch("http://localhost:8000/company/onboarding", {
+      const response = await fetch(`${API_BASE_URL}/company/onboarding`, {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",

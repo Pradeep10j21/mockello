@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,8 +27,9 @@ const CollegeLogin = () => {
 
     try {
       const endpoint = isLogin
-        ? "http://localhost:8000/college/login"
-        : "http://localhost:8000/college/register";
+        ? `${API_BASE_URL}/college/login`
+        : `${API_BASE_URL}/college/register`;
+
 
       const payload = isLogin
         ? { email: formData.email, password: formData.password }

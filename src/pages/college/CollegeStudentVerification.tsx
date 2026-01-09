@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { Check, X, Search, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,8 +41,9 @@ const CollegeStudentVerification = () => {
             return;
         }
         try {
-            const url = `http://localhost:8000/college/pending-students/${collegeEmail}`;
+            const url = `${API_BASE_URL}/college/pending-students/${collegeEmail}`;
             console.log("Requesting URL:", url);
+
 
             const response = await fetch(url);
             console.log("Response status:", response.status);
@@ -61,7 +64,8 @@ const CollegeStudentVerification = () => {
 
     const handleVerify = async (studentEmail: string) => {
         try {
-            const response = await fetch(`http://localhost:8000/college/verify-student/${studentEmail}`, {
+            const response = await fetch(`${API_BASE_URL}/college/verify-student/${studentEmail}`, {
+
                 method: 'POST'
             });
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import {
   ArrowRight,
   Check,
@@ -84,7 +86,8 @@ const StudentOnboardingPage = () => {
         delete (payload as any).resumeFile;
         delete (payload as any).internshipFile;
 
-        const response = await fetch("http://localhost:8000/student/onboarding", {
+        const response = await fetch(`${API_BASE_URL}/student/onboarding`, {
+
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -153,10 +156,10 @@ const StudentOnboardingPage = () => {
             <div key={step.id} className="flex items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${currentStep > step.id
-                    ? "bg-secondary text-secondary-foreground"
-                    : currentStep === step.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                  ? "bg-secondary text-secondary-foreground"
+                  : currentStep === step.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                   }`}
               >
                 {currentStep > step.id ? <Check className="w-5 h-5" /> : step.id}

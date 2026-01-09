@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import CollegeSidebar from "@/components/CollegeSidebar";
+import { API_BASE_URL } from "../../services/apiConfig";
+
 import { Building2, MapPin, Mail, Phone, Edit, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +35,8 @@ const CollegeProfile = () => {
     const fetchProfile = async () => {
       if (!collegeEmail) return;
       try {
-        const response = await fetch(`http://localhost:8000/college/me/${collegeEmail}`);
+        const response = await fetch(`${API_BASE_URL}/college/me/${collegeEmail}`);
+
         if (response.ok) {
           const data = await response.json();
           setProfile(prev => ({

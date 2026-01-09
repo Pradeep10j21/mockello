@@ -29,12 +29,6 @@ const StudentDashboard = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div><h1 className="text-3xl font-serif font-bold">Dashboard</h1><p className="text-muted-foreground">Track your placement journey and opportunities</p></div>
           <div className="flex gap-2">
-            <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={() => {
-              window.location.href = `/hr-interview-panel?session=final_test&role=candidate`;
-            }}>
-              <Users className="w-4 h-4" />
-              Join Live Interview
-            </Button>
             <Link to="/mock-placement">
               <Button className="gap-2">
                 <Rocket className="w-4 h-4" />
