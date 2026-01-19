@@ -1,0 +1,338 @@
+[
+    {
+        "id": 1,
+        "section": "DBMS",
+        "question": "What does ACID stand for in database transactions?",
+        "options": [
+            "Atomicity, Consistency, Isolation, Durability",
+            "Association, Consistency, Integrity, Durability",
+            "Atomicity, Concurrency, Isolation, Data",
+            "Association, Concurrency, Integrity, Data"
+        ],
+        "correctAnswer": 0
+    },
+    {
+        "id": 2,
+        "section": "DBMS",
+        "question": "Which normal form eliminates transitive dependency?",
+        "options": [
+            "1NF",
+            "2NF",
+            "3NF",
+            "BCNF"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 3,
+        "section": "DBMS",
+        "question": "What is the primary purpose of an index in a database?",
+        "options": [
+            "To store backup data",
+            "To speed up data retrieval operations",
+            "To encrypt sensitive data",
+            "To compress the database"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 4,
+        "section": "DBMS",
+        "question": "Which SQL command is used to remove a table from the database?",
+        "options": [
+            "DELETE TABLE",
+            "REMOVE TABLE",
+            "DROP TABLE",
+            "CLEAR TABLE"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 5,
+        "section": "DBMS",
+        "question": "What type of join returns all rows from the left table and matching rows from the right table?",
+        "options": [
+            "INNER JOIN",
+            "LEFT JOIN",
+            "RIGHT JOIN",
+            "CROSS JOIN"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 6,
+        "section": "DBMS",
+        "question": "Which of the following is NOT a type of database key?",
+        "options": [
+            "Primary Key",
+            "Foreign Key",
+            "Secondary Key",
+            "Composite Key"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 7,
+        "section": "DBMS",
+        "question": "What is a deadlock in database systems?",
+        "options": [
+            "When a transaction fails to complete",
+            "When two or more transactions wait indefinitely for each other",
+            "When the database runs out of memory",
+            "When a query takes too long to execute"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 8,
+        "section": "OS",
+        "question": "What is a process in an operating system?",
+        "options": [
+            "A program stored on disk",
+            "A program in execution",
+            "A piece of hardware",
+            "A system file"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 9,
+        "section": "OS",
+        "question": "Which scheduling algorithm may cause starvation?",
+        "options": [
+            "First-Come-First-Serve",
+            "Round Robin",
+            "Priority Scheduling",
+            "Shortest Job First"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 10,
+        "section": "OS",
+        "question": "What is virtual memory?",
+        "options": [
+            "Extra RAM installed in the system",
+            "Memory management technique using disk space as RAM extension",
+            "Cache memory",
+            "Read-only memory"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 11,
+        "section": "OS",
+        "question": "What is the role of the kernel in an operating system?",
+        "options": [
+            "Managing user interfaces",
+            "Core component managing system resources",
+            "Running applications",
+            "Storing user data"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 12,
+        "section": "OS",
+        "question": "What is a semaphore used for?",
+        "options": [
+            "Memory allocation",
+            "Process synchronization",
+            "File management",
+            "Network communication"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 13,
+        "section": "OS",
+        "question": "Which page replacement algorithm is known as the optimal algorithm?",
+        "options": [
+            "FIFO",
+            "LRU",
+            "Optimal (MIN)",
+            "Clock"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 14,
+        "section": "OS",
+        "question": "What is thrashing in operating systems?",
+        "options": [
+            "A type of virus attack",
+            "Excessive paging causing performance degradation",
+            "Memory leak",
+            "CPU overheating"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 15,
+        "section": "Networking",
+        "question": "Which layer of the OSI model is responsible for routing?",
+        "options": [
+            "Data Link Layer",
+            "Network Layer",
+            "Transport Layer",
+            "Session Layer"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 16,
+        "section": "Networking",
+        "question": "What protocol is used to resolve IP addresses to MAC addresses?",
+        "options": [
+            "DNS",
+            "DHCP",
+            "ARP",
+            "ICMP"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 17,
+        "section": "Networking",
+        "question": "Which of the following is a connection-oriented protocol?",
+        "options": [
+            "UDP",
+            "TCP",
+            "IP",
+            "ICMP"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 18,
+        "section": "Networking",
+        "question": "What is the default port number for HTTPS?",
+        "options": [
+            "80",
+            "443",
+            "8080",
+            "21"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 19,
+        "section": "Networking",
+        "question": "What does DNS stand for?",
+        "options": [
+            "Data Network Service",
+            "Domain Name System",
+            "Dynamic Network Server",
+            "Distributed Name Service"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 20,
+        "section": "Networking",
+        "question": "Which topology uses a central hub or switch?",
+        "options": [
+            "Ring",
+            "Bus",
+            "Star",
+            "Mesh"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 21,
+        "section": "Networking",
+        "question": "What is the purpose of a subnet mask?",
+        "options": [
+            "To encrypt network traffic",
+            "To divide an IP address into network and host portions",
+            "To speed up internet connection",
+            "To block unwanted traffic"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 22,
+        "section": "DSA",
+        "question": "What is the time complexity of binary search?",
+        "options": [
+            "O(n)",
+            "O(log n)",
+            "O(n²)",
+            "O(1)"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 23,
+        "section": "DSA",
+        "question": "Which data structure uses LIFO principle?",
+        "options": [
+            "Queue",
+            "Stack",
+            "Array",
+            "Linked List"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 24,
+        "section": "DSA",
+        "question": "What is the worst-case time complexity of QuickSort?",
+        "options": [
+            "O(n log n)",
+            "O(n)",
+            "O(n²)",
+            "O(log n)"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 25,
+        "section": "DSA",
+        "question": "Which traversal visits the root node first in a binary tree?",
+        "options": [
+            "Inorder",
+            "Preorder",
+            "Postorder",
+            "Level order"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 26,
+        "section": "DSA",
+        "question": "What data structure is used in BFS (Breadth-First Search)?",
+        "options": [
+            "Stack",
+            "Queue",
+            "Heap",
+            "Tree"
+        ],
+        "correctAnswer": 1
+    },
+    {
+        "id": 27,
+        "section": "DSA",
+        "question": "What is the space complexity of merge sort?",
+        "options": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n²)"
+        ],
+        "correctAnswer": 2
+    },
+    {
+        "id": 28,
+        "section": "DSA",
+        "question": "Which of the following is NOT a greedy algorithm?",
+        "options": [
+            "Dijkstra's Algorithm",
+            "Kruskal's Algorithm",
+            "Bellman-Ford Algorithm",
+            "Prim's Algorithm"
+        ],
+        "correctAnswer": 2
+    }
+]

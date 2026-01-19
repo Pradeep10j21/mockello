@@ -444,6 +444,58 @@ const InterviewSession = () => {
 
         try {
             const result = await groqService.evaluateInterview(conversationHistory);
+
+            // --- Save Score to Backend ---
+            const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
+            // Ideally fetch name from backend, but for speed/MVP we might default or try to get it.
+            // If we want the real name, we should fetch it. For now, let's try a quick fetch or default.
+            let studentName = "Guest User";
+
+            try {
+                // Simple fetch to get name if possible
+                const token = localStorage.getItem("token");
+                if (token && userEmail !== "guest@example.com") {
+                    const { API_BASE_URL } = await import("@/services/apiConfig");
+                    const res = await fetch(`${API_BASE_URL}/student/me/${userEmail}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        studentName = data.fullName || "Student";
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not fetch student name", e);
+            }
+
+            const scorePayload = {
+                student_name: studentName,
+                student_email: userEmail,
+                round_type: 'ai_interview',
+                overall_score: result.overallScore,
+                department: department,
+                domain: domain,
+                details: {
+                    structure_score: result.structureScore,
+                    clarity_score: result.clarityScore,
+                    confidence_score: result.confidenceScore,
+                    feedback: result.feedback,
+                    improvements: result.improvements
+                }
+            };
+
+            try {
+                const { SAVE_SCORE_URL } = await import("@/services/apiConfig");
+                await fetch(SAVE_SCORE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scorePayload)
+                });
+                console.log("Score saved successfully");
+            } catch (saveError) {
+                console.error("Failed to save score backend", saveError);
+                // Don't block navigation on save fail
+            }
+            // -----------------------------
+
             navigate('/interview/result', { state: { result } });
         } catch (error) {
             console.error("Evaluation error:", error);

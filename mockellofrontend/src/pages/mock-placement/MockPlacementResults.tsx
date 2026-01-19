@@ -50,6 +50,61 @@ const MockPlacementResults = () => {
     if (result.accuracy > 70) setShowConfetti(true);
   }, [result.accuracy]);
 
+  // Save Score Effect
+  useEffect(() => {
+    const saveScore = async () => {
+      // Prevent double saving if already saved or simple guard
+      if (location.state?.scoreSaved) return;
+
+      const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
+      let studentName = "Guest User";
+
+      try {
+        const token = localStorage.getItem("token");
+        if (token && userEmail !== "guest@example.com") {
+          const { API_BASE_URL } = await import("@/services/apiConfig");
+          const res = await fetch(`${API_BASE_URL}/student/me/${userEmail}`);
+          if (res.ok) {
+            const data = await res.json();
+            studentName = data.fullName || "Student";
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch student name", e);
+      }
+
+      // Check if we already saved in this session instance to avoid strict mode doubles
+      // utilizing a sessionStorage flag or just trusting the backend/idempotency roughly
+      const sessionKey = `mock_placement_saved_${Date.now()}`;
+
+      const scorePayload = {
+        student_name: studentName,
+        student_email: userEmail,
+        round_type: 'mock_placement',
+        overall_score: result.accuracy,
+        details: {
+          accuracy: result.accuracy,
+          time_spent: result.timeSpent,
+          category_breakdown: result.categoryBreakdown
+        }
+      };
+
+      try {
+        const { SAVE_SCORE_URL } = await import("@/services/apiConfig");
+        await fetch(SAVE_SCORE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(scorePayload)
+        });
+        console.log("Mock Placement Score saved");
+      } catch (e) {
+        console.error("Failed to save mock placement score", e);
+      }
+    };
+
+    saveScore();
+  }, [result.accuracy]);
+
   // Ensure result exists and has valid values
   const safeResult = result || {
     accuracy: 0,

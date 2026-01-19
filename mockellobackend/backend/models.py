@@ -180,3 +180,29 @@ class InterviewResultResponse(InterviewResultBase):
 
     class Config:
         populate_by_name = True
+
+# --- Unified Score Models ---
+class ScoreBase(BaseModel):
+    student_name: str
+    student_email: str
+    round_type: str # 'mock_placement', 'tech_prep', 'technical_interview', 'gd_round', 'ai_interview'
+    overall_score: float # Normalized 0-100
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Optional metadata
+    department: Optional[str] = None
+    domain: Optional[str] = None
+    
+    # Detailed Data (Flexible Dict for specific round details)
+    # We use a dict to store the specific breakdown for each round type
+    # instead of creating separate collections for now to keep it simple.
+    details: dict = {} 
+
+class ScoreCreate(ScoreBase):
+    pass
+
+class ScoreResponse(ScoreBase):
+    id: str = Field(..., alias="_id")
+    
+    class Config:
+        populate_by_name = True

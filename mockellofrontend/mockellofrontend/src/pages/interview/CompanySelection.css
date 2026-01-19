@@ -1,0 +1,312 @@
+.company-selection {
+  min-height: 100vh;
+  padding: 0;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.selection-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg-gradient {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #F2F6F0 0%, #E9F2EB 50%, #F2F6F0 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.company-selection-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 60px 30px;
+}
+
+.company-selection-header {
+  text-align: center;
+  margin-bottom: 60px;
+  animation: fadeInDown 0.6s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.header-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+  color: white;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(15, 44, 31, 0.2);
+}
+
+.company-selection-header h1 {
+  font-size: 3.5rem;
+  color: var(--green-primary);
+  margin-bottom: 15px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.company-selection-header p {
+  font-size: 1.3rem;
+  color: var(--green-muted);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.company-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 30px;
+  margin-bottom: 50px;
+  animation: fadeInUp 0.8s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.company-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-main) 100%);
+  border-radius: 20px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(15, 44, 31, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid var(--green-light);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.company-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--company-color);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.company-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(15, 44, 31, 0.2);
+  border-color: var(--company-color);
+}
+
+.company-card:hover::before {
+  transform: scaleX(1);
+}
+
+.company-card-header {
+  padding: 30px 30px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-card) 100%);
+}
+
+.company-logo-container {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(15, 44, 31, 0.1);
+  padding: 12px;
+  transition: transform 0.3s ease;
+  border: 1px solid var(--green-light);
+}
+
+.company-card:hover .company-logo-container {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.company-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.company-logo-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--green-primary);
+  background: var(--bg-main);
+  border-radius: 12px;
+}
+
+.difficulty-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.company-card-body {
+  padding: 0 30px 25px;
+}
+
+.company-name {
+  font-size: 1.8rem;
+  color: var(--green-primary);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.company-role {
+  font-size: 1rem;
+  color: var(--green-dark);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.company-description {
+  font-size: 0.9rem;
+  color: var(--green-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.start-interview-btn {
+  width: calc(100% - 60px);
+  margin: 0 30px 30px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(15, 44, 31, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.start-interview-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(15, 44, 31, 0.3);
+}
+
+.start-interview-btn:active {
+  transform: translateY(0);
+}
+
+.start-interview-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.start-interview-btn:hover svg {
+  transform: translateX(4px);
+}
+
+.selection-footer {
+  text-align: center;
+  padding: 30px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(15, 44, 31, 0.08);
+  margin-top: 40px;
+}
+
+.selection-footer p {
+  color: var(--green-muted);
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .company-selection-content {
+    padding: 40px 20px;
+  }
+
+  .company-selection-header h1 {
+    font-size: 2.5rem;
+  }
+
+  .company-selection-header p {
+    font-size: 1.1rem;
+  }
+
+  .company-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .company-card-header {
+    padding: 25px 25px 15px;
+  }
+
+  .company-card-body {
+    padding: 0 25px 20px;
+  }
+
+  .start-interview-btn {
+    width: calc(100% - 50px);
+    margin: 0 25px 25px;
+  }
+}
+

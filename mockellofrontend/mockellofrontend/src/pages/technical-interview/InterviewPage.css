@@ -1,0 +1,153 @@
+.interview-page {
+  height: 100vh;
+  width: 100vw;
+  padding: 0;
+  margin: 0;
+  background: var(--bg-main);
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.interview-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-card) 100%);
+}
+
+.interview-left,
+.interview-right {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(15, 44, 31, 0.1);
+  overflow: hidden;
+  border: 2px solid var(--green-light);
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.complete-test-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 44, 31, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.complete-test-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 50px 40px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(15, 44, 31, 0.3);
+  max-width: 500px;
+  animation: slideUp 0.4s ease;
+  border: 3px solid var(--green-primary);
+  color: var(--green-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.complete-icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.complete-test-modal h2 {
+  color: var(--green-primary);
+  font-size: 2rem;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.complete-test-modal p {
+  color: var(--green-muted);
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.complete-test-btn {
+  padding: 16px 40px;
+  background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(15, 44, 31, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.complete-test-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(15, 44, 31, 0.4);
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-primary) 100%);
+}
+
+.complete-test-btn:active {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1024px) {
+  .interview-container {
+    grid-template-columns: 1fr;
+    height: 100vh;
+  }
+  
+  .interview-left,
+  .interview-right {
+    height: 50vh;
+  }
+
+  .complete-test-modal {
+    margin: 20px;
+    padding: 40px 30px;
+  }
+}
+

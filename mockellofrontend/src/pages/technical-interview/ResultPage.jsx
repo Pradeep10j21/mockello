@@ -128,6 +128,57 @@ function ResultPage() {
     setResults(mockResults);
   }, [location]);
 
+  // Save Score Effect
+  useEffect(() => {
+    if (!results) return;
+
+    const saveScore = async () => {
+      const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
+      let studentName = "Guest User";
+
+      try {
+        const token = localStorage.getItem("token");
+        if (token && userEmail !== "guest@example.com") {
+          const { API_BASE_URL } = await import("@/services/apiConfig");
+          const res = await fetch(`${API_BASE_URL}/student/me/${userEmail}`);
+          if (res.ok) {
+            const data = await res.json();
+            studentName = data.fullName || "Student";
+          }
+        }
+      } catch (e) {
+        console.warn("Name fetch fail", e);
+      }
+
+      const scorePayload = {
+        student_name: studentName,
+        student_email: userEmail,
+        round_type: 'technical_interview',
+        overall_score: results.overallScore,
+        details: {
+          skill_breakdown: results.skillBreakdown,
+          strengths: results.strengths,
+          improvements: results.improvements,
+          answers_count: results.answers?.length || 0
+        }
+      };
+
+      try {
+        const { SAVE_SCORE_URL } = await import("@/services/apiConfig");
+        await fetch(SAVE_SCORE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(scorePayload)
+        });
+        console.log("Technical Interview Score saved");
+      } catch (e) {
+        console.error("Technical Interview save failed", e);
+      }
+    };
+
+    saveScore();
+  }, [results]);
+
   useEffect(() => {
     if (results) {
       const duration = 2000;

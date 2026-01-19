@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -11,6 +12,7 @@ import {
   Zap,
   Users,
   CheckCircle,
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -69,6 +71,58 @@ export default function GDResult() {
   const { transcript = [], topic = '' } = location.state || {};
 
   const result = generateYourResult(transcript);
+
+  // Save Score Effect
+  useEffect(() => {
+    const saveScore = async () => {
+      // Simple guard for idempotency if needed, but for MVP just run on mount
+      const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
+      let studentName = "Guest User";
+
+      try {
+        const token = localStorage.getItem("token");
+        if (token && userEmail !== "guest@example.com") {
+          const { API_BASE_URL } = await import("@/services/apiConfig");
+          const res = await fetch(`${API_BASE_URL}/student/me/${userEmail}`);
+          if (res.ok) {
+            const data = await res.json();
+            studentName = data.fullName || "Student";
+          }
+        }
+      } catch (e) {
+        console.warn("Name fetch fail", e);
+      }
+
+      const scorePayload = {
+        student_name: studentName,
+        student_email: userEmail,
+        round_type: 'gd_round',
+        overall_score: result.score * 10, // Normalize 10 to 100
+        details: {
+          relevance: result.relevance,
+          communication: result.communication,
+          confidence: result.confidence,
+          participation: result.participation,
+          logicalFlow: result.logicalFlow,
+          rank: result.rank,
+          topic: topic
+        }
+      };
+
+      try {
+        const { SAVE_SCORE_URL } = await import("@/services/apiConfig");
+        await fetch(SAVE_SCORE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(scorePayload)
+        });
+        console.log("GD Score saved");
+      } catch (e) {
+        console.error("GD save failed", e);
+      }
+    };
+    saveScore();
+  }, [result.score]); // Dependencies from result which is stable per render
 
   const scoreMetrics = [
     { label: 'Relevance', value: result.relevance, icon: MessageCircle },
@@ -283,7 +337,3 @@ export default function GDResult() {
     </div>
   );
 }
-
-
-
-

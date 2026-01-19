@@ -62,6 +62,9 @@ app.include_router(techprep.router)
 from backend.routers import interview_room
 app.include_router(interview_room.router)
 
+from backend.routers import scores
+app.include_router(scores.router)
+
 @app.get("/")
 def root():
     return {

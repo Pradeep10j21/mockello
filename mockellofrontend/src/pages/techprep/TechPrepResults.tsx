@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,53 @@ const TechPrepResults = () => {
 
     const { score, totalQuestions, results, department } = state;
     const percentage = Math.round((score / totalQuestions) * 100);
+
+    useEffect(() => {
+        const saveScore = async () => {
+            const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
+            let studentName = "Guest User";
+
+            try {
+                const token = localStorage.getItem("token");
+                if (token && userEmail !== "guest@example.com") {
+                    const { API_BASE_URL } = await import("@/services/apiConfig");
+                    const res = await fetch(`${API_BASE_URL}/student/me/${userEmail}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        studentName = data.fullName || "Student";
+                    }
+                }
+            } catch (e) {
+                console.warn("Name fetch fail", e);
+            }
+
+            const scorePayload = {
+                student_name: studentName,
+                student_email: userEmail,
+                round_type: 'tech_prep',
+                overall_score: percentage,
+                department: department,
+                details: {
+                    total_questions: totalQuestions,
+                    correct_answers: score
+                }
+            };
+
+            try {
+                const { SAVE_SCORE_URL } = await import("@/services/apiConfig");
+                await fetch(SAVE_SCORE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scorePayload)
+                });
+                console.log("TechPrep Score saved");
+            } catch (e) {
+                console.error("TechPrep save failed", e);
+            }
+        };
+
+        saveScore();
+    }, []);
 
     // Get sections based on department or fallback to default
     const sections = useMemo(() => {
