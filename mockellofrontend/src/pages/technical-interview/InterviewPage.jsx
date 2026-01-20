@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import VideoInterview from '../../components/technical-interview/VideoInterview';
 import AIQuestionPanel from '../../components/technical-interview/AIQuestionPanel';
 import { useInterviewLogic } from '../../hooks/technical-interview/useInterviewLogic';
+import { Loader2 } from 'lucide-react';
 import './InterviewPage.css';
 
 function InterviewPage() {
@@ -22,7 +23,9 @@ function InterviewPage() {
     stopInterview,
     skipQuestion,
     saveAnswer,
-    getResults
+    getResults,
+    loading: questionsLoading,
+    evaluating
   } = useInterviewLogic(department, domain, difficulty);
 
   const [transcript, setTranscript] = useState('');
@@ -48,15 +51,16 @@ function InterviewPage() {
     }
   }, [currentQuestionIndex, questions, saveAnswer, stopInterview]);
 
-  const handleCompleteTest = useCallback(() => {
-    const results = getResults();
+  const handleCompleteTest = useCallback(async () => {
+    // Make async call
+    const results = await getResults();
     navigate('/technical-interview/result', { state: { results, companyId } });
   }, [getResults, navigate, companyId]);
 
-  const handleStopInterview = useCallback(() => {
+  const handleStopInterview = useCallback(async () => {
     stopInterview();
     // Get results and navigate to result page
-    const results = getResults();
+    const results = await getResults();
     navigate('/technical-interview/result', { state: { results, companyId } });
   }, [stopInterview, getResults, navigate, companyId]);
 
@@ -68,9 +72,21 @@ function InterviewPage() {
     }
   }, [answers, questions, allQuestionsAnswered]);
 
+  if (questionsLoading || evaluating) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0F2C1F] text-white">
+        <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mb-4" />
+        <h2 className="text-xl font-semibold">
+          {evaluating ? "AI is evaluating your interview..." : "Preparing your interview..."}
+        </h2>
+        {evaluating && <p className="text-gray-400 mt-2">Analyzing your technical accuracy and communication skills.</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="interview-page">
-      {showCompleteButton && (
+      {showCompleteButton && !evaluating && (
         <div className="complete-test-overlay">
           <div className="complete-test-modal">
             <div className="complete-icon">✅</div>
@@ -114,4 +130,3 @@ function InterviewPage() {
 }
 
 export default InterviewPage;
-

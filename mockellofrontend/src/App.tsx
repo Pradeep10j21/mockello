@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { PeerProvider } from "./context/PeerContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ApprovalPending from "./pages/ApprovalPending";
@@ -54,9 +55,9 @@ import MockPlacementResults from "./pages/mock-placement/MockPlacementResults";
 
 // GD Room Module
 import GDPortal from "./pages/gd-room/GDPortal";
-import WaitingRoom from "./pages/gd-room/WaitingRoom";
-import GDRoom from "./pages/gd-room/GDRoom";
-import GDResult from "./pages/gd-room/GDResult";
+import { WaitingRoom } from "./pages/gd-room/WaitingRoom";
+import { GDSession } from "./pages/gd-room/GDSession";
+import { Results as GDResult } from "./pages/gd-room/GDResult";
 
 // Interview Sim Module
 import InterviewSetup from "./pages/interview-sim/InterviewSetup";
@@ -89,110 +90,113 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Landing Page */}
-          <Route path="/" element={<Index />} />
+    <PeerProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Landing Page */}
+            <Route path="/" element={<Index />} />
 
-          {/* College Routes */}
-          <Route path="/college/login" element={<CollegeLogin />} />
-          <Route path="/college/onboarding" element={<CollegeOnboarding />} />
-          <Route path="/college/dashboard" element={<CollegeDashboard />} />
-          <Route path="/college/verification" element={<CollegeStudentVerification />} />
-          <Route path="/college/profile" element={<CollegeProfile />} />
-          <Route path="/college/companies" element={<CollegeCompanies />} />
-          <Route path="/college/company/:id" element={<CompanyDetail />} />
-          <Route path="/college/eligibility" element={<CollegeAnalytics />} />
+            {/* College Routes */}
+            <Route path="/college/login" element={<CollegeLogin />} />
+            <Route path="/college/onboarding" element={<CollegeOnboarding />} />
+            <Route path="/college/dashboard" element={<CollegeDashboard />} />
+            <Route path="/college/verification" element={<CollegeStudentVerification />} />
+            <Route path="/college/profile" element={<CollegeProfile />} />
+            <Route path="/college/companies" element={<CollegeCompanies />} />
+            <Route path="/college/company/:id" element={<CompanyDetail />} />
+            <Route path="/college/eligibility" element={<CollegeAnalytics />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/colleges" element={<AdminColleges />} />
-          <Route path="/admin/companies" element={<AdminCompanies />} />
-          <Route path="/admin/students" element={<AdminStudents />} />
-          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/colleges" element={<AdminColleges />} />
+            <Route path="/admin/companies" element={<AdminCompanies />} />
+            <Route path="/admin/students" element={<AdminStudents />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
 
-          {/* Company Routes */}
-          <Route path="/company/login" element={<CompanyLogin />} />
-          <Route path="/company/onboarding" element={<CompanyOnboarding />} />
-          <Route path="/company/dashboard" element={<CompanyDashboard />} />
-          <Route path="/company/profile" element={<CompanyProfile />} />
-          <Route path="/company/criteria" element={<CompanyJobCriteria />} />
-          <Route path="/company/colleges" element={<CompanyColleges />} />
-          <Route path="/company/college/:id" element={<CollegeDetail />} />
-          <Route path="/company/updates" element={<CompanyUpdates />} />
-          <Route path="/company/dict" element={<InterviewPerformance />} /> {/* Using 'dict' as a shorthand or you can use /performance */}
-          <Route path="/company/performance" element={<InterviewPerformance />} />
+            {/* Company Routes */}
+            <Route path="/company/login" element={<CompanyLogin />} />
+            <Route path="/company/onboarding" element={<CompanyOnboarding />} />
+            <Route path="/company/dashboard" element={<CompanyDashboard />} />
+            <Route path="/company/profile" element={<CompanyProfile />} />
+            <Route path="/company/criteria" element={<CompanyJobCriteria />} />
+            <Route path="/company/colleges" element={<CompanyColleges />} />
+            <Route path="/company/college/:id" element={<CollegeDetail />} />
+            <Route path="/company/updates" element={<CompanyUpdates />} />
+            <Route path="/company/dict" element={<InterviewPerformance />} /> {/* Using 'dict' as a shorthand or you can use /performance */}
+            <Route path="/company/performance" element={<InterviewPerformance />} />
 
-          {/* Student Portal Routes */}
-          <Route path="/student" element={<StudentLandingPage />} />
-          <Route path="/student/login" element={<StudentAuthPage />} />
-          <Route path="/student/auth" element={<StudentAuthPage />} />
-          <Route path="/student/approval-pending" element={<StudentApprovalPending />} />
-          <Route path="/student/onboarding" element={<StudentOnboardingPage />} />
-          <Route path="/student/dashboard" element={<StudentDashboard />} />
-          <Route path="/student/companies" element={<StudentCompaniesPage />} />
-          <Route path="/student/companies/:id" element={<StudentCompanyDetailPage />} />
-          <Route path="/student/applications" element={<StudentApplicationsPage />} />
-          <Route path="/student/profile" element={<StudentProfilePage />} />
+            {/* Student Portal Routes */}
+            <Route path="/student" element={<StudentLandingPage />} />
+            <Route path="/student/login" element={<StudentAuthPage />} />
+            <Route path="/student/auth" element={<StudentAuthPage />} />
+            <Route path="/student/approval-pending" element={<StudentApprovalPending />} />
+            <Route path="/student/onboarding" element={<StudentOnboardingPage />} />
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/companies" element={<StudentCompaniesPage />} />
+            <Route path="/student/companies/:id" element={<StudentCompanyDetailPage />} />
+            <Route path="/student/applications" element={<StudentApplicationsPage />} />
+            <Route path="/student/profile" element={<StudentProfilePage />} />
 
-          {/* Mock Placement Routes */}
-          <Route path="/mock-placement" element={<MockelloLanding />} />
-          <Route path="/mock-placement/assessment" element={<MockPlacementAssessment />} />
-          <Route path="/mock-placement/results" element={<MockPlacementResults />} />
+            {/* Mock Placement Routes */}
+            <Route path="/mock-placement" element={<MockelloLanding />} />
+            <Route path="/mock-placement/assessment" element={<MockPlacementAssessment />} />
+            <Route path="/mock-placement/results" element={<MockPlacementResults />} />
 
-          {/* GD Room Routes */}
-          <Route path="/gd-portal" element={<GDPortal />} />
-          <Route path="/gd-portal/waiting-room" element={<WaitingRoom />} />
-          <Route path="/gd-portal/gd-room" element={<GDRoom />} />
-          <Route path="/gd-portal/result" element={<GDResult />} />
+            {/* GD Room Routes */}
+            <Route path="/gd-portal" element={<GDPortal />} />
+            <Route path="/gd-portal/waiting-room" element={<WaitingRoom />} />
+            <Route path="/session/:sessionId/room/:roomId" element={<GDSession />} />
+            <Route path="/gd-portal/result" element={<GDResult />} />
 
-          {/* TechPrep Assessment Routes */}
-          <Route path="/techprep" element={<TechPrepLanding />} />
-          <Route path="/techprep/select" element={<TechPrepDepartmentSelection />} />
-          <Route path="/techprep/instructions" element={<TechPrepInstructions />} />
-          <Route path="/techprep/test" element={<TechPrepTest />} />
-          <Route path="/techprep/results" element={<TechPrepResults />} />
+            {/* TechPrep Assessment Routes */}
+            <Route path="/techprep" element={<TechPrepLanding />} />
+            <Route path="/techprep/select" element={<TechPrepDepartmentSelection />} />
+            <Route path="/techprep/instructions" element={<TechPrepInstructions />} />
+            <Route path="/techprep/test" element={<TechPrepTest />} />
+            <Route path="/techprep/results" element={<TechPrepResults />} />
 
-          {/* Technical Interview Module (External Integration) */}
-          <Route path="/technical-interview" element={<TechnicalInterviewLandingPage />} />
-          <Route path="/technical-interview/select" element={<TechnicalCompanySelection />} />
-          <Route path="/technical-interview/:companyId" element={<TechnicalInterviewPage />} />
-          <Route path="/technical-interview/result" element={<TechnicalResultPage />} />
+            {/* Technical Interview Module (External Integration) */}
+            <Route path="/technical-interview" element={<TechnicalInterviewLandingPage />} />
+            <Route path="/technical-interview/select" element={<TechnicalCompanySelection />} />
+            <Route path="/technical-interview/:companyId" element={<TechnicalInterviewPage />} />
+            <Route path="/technical-interview/result" element={<TechnicalResultPage />} />
 
-          {/* AI Interview Route (Part of Mock Placement Flow) */}
-          <Route path="/ai-interview" element={<InterviewSetup />} />
+            {/* AI Interview Route (Part of Mock Placement Flow) */}
+            <Route path="/ai-interview" element={<InterviewSetup />} />
 
-          {/* Interview Simulator Routes (Standalone) */}
-          <Route path="/interview" element={<InterviewSetup />} />
-          <Route path="/interview/session" element={<InterviewSession />} />
-          <Route path="/interview/result" element={<InterviewResult />} /> {/* Result Page */}
-          <Route path="/interview/result" element={<InterviewResult />} /> {/* Result Page */}
-          {/* <Route path="/test/result-ui" element={<InterviewResultDraft />} /> */}
+            {/* Interview Simulator Routes (Standalone) */}
+            <Route path="/interview" element={<InterviewSetup />} />
+            <Route path="/interview/session" element={<InterviewSession />} />
+            <Route path="/interview/result" element={<InterviewResult />} /> {/* Result Page */}
+            <Route path="/interview/result" element={<InterviewResult />} /> {/* Result Page */}
+            {/* <Route path="/test/result-ui" element={<InterviewResultDraft />} /> */}
 
-          {/* HR Interview Portal */}
-          <Route path="/hr-interview-panel" element={<HRInterviewPortal />} />
-          <Route path="/hr-portal" element={<HRInterviewPortal />} />
-          <Route path="/debug-audio" element={<DebugAudio />} />
+            {/* HR Interview Portal */}
+            <Route path="/hr-interview-panel" element={<HRInterviewPortal />} />
+            <Route path="/hr-portal" element={<HRInterviewPortal />} />
+            <Route path="/debug-audio" element={<DebugAudio />} />
 
-          {/* Legacy Interview Routes (Deprecated) */}
-          {/* <Route path="/interview" element={<InterviewLandingPage />} /> */}
-          {/* <Route path="/interview/select" element={<CompanySelection />} /> */}
-          {/* <Route path="/interview/:companyId" element={<InterviewPage />} /> */}
-          {/* <Route path="/interview/result" element={<ResultPage />} /> */}
+            {/* Legacy Interview Routes (Deprecated) */}
+            {/* <Route path="/interview" element={<InterviewLandingPage />} /> */}
+            {/* <Route path="/interview/select" element={<CompanySelection />} /> */}
+            {/* <Route path="/interview/:companyId" element={<InterviewPage />} /> */}
+            {/* <Route path="/interview/result" element={<ResultPage />} /> */}
 
-          {/* Common Routes */}
-          <Route path="/approval-pending" element={<ApprovalPending />} />
+            {/* Common Routes */}
+            <Route path="/approval-pending" element={<ApprovalPending />} />
 
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+
+      </TooltipProvider>
+    </PeerProvider>
+  </QueryClientProvider >
 );
 
 export default App;
