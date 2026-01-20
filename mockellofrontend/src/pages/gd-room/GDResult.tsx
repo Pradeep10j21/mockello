@@ -1,339 +1,171 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { motion } from 'framer-motion';
-import {
-  ArrowLeft,
-  Trophy,
-  TrendingUp,
-  TrendingDown,
-  Lightbulb,
-  BarChart3,
-  MessageCircle,
-  Zap,
-  Users,
-  CheckCircle,
-  ArrowRight
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import type { TranscriptMessage, Participant, GDResult as GDResultType } from '@/types/gd';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { apiService } from '../../services/apiConfig';
+import { usePeer } from '../../context/PeerContext';
+import { Loader2, TrendingUp, Award, Lightbulb, MessageCircle, BarChart3 } from 'lucide-react';
 
-// Simulated AI analysis for "You"
-const generateYourResult = (transcript: TranscriptMessage[]): GDResultType => {
-  const yourMessages = transcript.filter((m) => m.isYou);
-  const messageCount = yourMessages.length;
+interface EvaluationResult {
+  scores: { [key: string]: number };
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+}
 
-  // Calculate scores based on participation (with minimum base scores)
-  const baseParticipation = messageCount > 0 ? Math.min(10, 5 + (messageCount / 3) * 5) : 6.5;
-  const relevance = 7.8 + Math.random() * 1.5;
-  const communication = 7.5 + Math.random() * 2;
-  const confidence = 7.2 + Math.random() * 2.3;
-  const logicalFlow = 7.6 + Math.random() * 1.8;
-  const participation = baseParticipation + Math.random() * 1.5;
-
-  const overallScore = ((participation + relevance + communication + confidence + logicalFlow) / 5);
-
-  return {
-    participantId: 'you',
-    participantName: 'You',
-    score: parseFloat(overallScore.toFixed(1)),
-    rank: Math.floor(Math.random() * 3) + 1,
-    strengths: [
-      'Clear and articulate presentation of ideas',
-      'Strong understanding of the topic and its implications',
-      'Respectful and collaborative approach with other participants',
-      'Used relevant real-world examples to support arguments',
-      'Maintained composure and confidence throughout the discussion',
-    ],
-    weaknesses: [
-      'Could initiate more points proactively',
-      'Some arguments needed deeper analysis',
-      'More engagement with opposing viewpoints would strengthen arguments',
-    ],
-    suggestions: [
-      'Practice opening statements to initiate discussions confidently',
-      'Back up your arguments with statistics and credible sources',
-      'Actively acknowledge and build upon other participants\' points',
-      'Summarize key takeaways at the end to leave a strong impression',
-      'Work on body language and eye contact for better presence',
-    ],
-    relevance,
-    communication,
-    confidence,
-    participation,
-    logicalFlow,
-  };
-};
-
-export default function GDResult() {
-  const location = useLocation();
+export const Results: React.FC = () => {
   const navigate = useNavigate();
-  const { transcript = [], topic = '' } = location.state || {};
+  const { state } = useLocation();
+  const { sessionId, roomId, myPeerId: statePeerId } = state || {};
+  const { myPeerId: contextPeerId } = usePeer();
+  const myPeerId = statePeerId || contextPeerId;
 
-  const result = generateYourResult(transcript);
+  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<EvaluationResult | null>(null);
+  const [error, setError] = useState('');
 
-  // Save Score Effect
   useEffect(() => {
-    const saveScore = async () => {
-      // Simple guard for idempotency if needed, but for MVP just run on mount
-      const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
-      let studentName = "Guest User";
+    if (!sessionId || !roomId || !myPeerId) {
+      if (!myPeerId) setError("Peer ID missing. Did you reload?");
+      else setError("Session details missing.");
+      setLoading(false);
+      return;
+    }
 
+    const fetchEvaluation = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (token && userEmail !== "guest@example.com") {
-          const { API_BASE_URL } = await import("@/services/apiConfig");
-          const res = await fetch(`${API_BASE_URL}/student/me/${userEmail}`);
-          if (res.ok) {
-            const data = await res.json();
-            studentName = data.fullName || "Student";
-          }
-        }
-      } catch (e) {
-        console.warn("Name fetch fail", e);
-      }
-
-      const scorePayload = {
-        student_name: studentName,
-        student_email: userEmail,
-        round_type: 'gd_round',
-        overall_score: result.score * 10, // Normalize 10 to 100
-        details: {
-          relevance: result.relevance,
-          communication: result.communication,
-          confidence: result.confidence,
-          participation: result.participation,
-          logicalFlow: result.logicalFlow,
-          rank: result.rank,
-          topic: topic
-        }
-      };
-
-      try {
-        const { SAVE_SCORE_URL } = await import("@/services/apiConfig");
-        await fetch(SAVE_SCORE_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(scorePayload)
-        });
-        console.log("GD Score saved");
-      } catch (e) {
-        console.error("GD save failed", e);
+        const res = await apiService.evaluateParticipant(sessionId, roomId, myPeerId);
+        setResult(res.data);
+      } catch (err) {
+        console.error(err);
+        setError("Authorized evaluation failed. Please try again.");
+      } finally {
+        setLoading(false);
       }
     };
-    saveScore();
-  }, [result.score]); // Dependencies from result which is stable per render
 
-  const scoreMetrics = [
-    { label: 'Relevance', value: result.relevance, icon: MessageCircle },
-    { label: 'Communication', value: result.communication, icon: Users },
-    { label: 'Confidence', value: result.confidence, icon: Zap },
-    { label: 'Participation', value: result.participation, icon: TrendingUp },
-    { label: 'Logical Flow', value: result.logicalFlow, icon: BarChart3 },
-  ];
+    fetchEvaluation();
+  }, [sessionId, roomId, myPeerId]);
 
-  const getRankLabel = (rank: number) => {
-    switch (rank) {
-      case 1: return '1st';
-      case 2: return '2nd';
-      case 3: return '3rd';
-      default: return `${rank}th`;
-    }
-  };
+  // Helper for category icons
+  const getIcon = (cat: string) => {
+    if (cat.includes("Creativity")) return <Lightbulb className="text-yellow-400" />;
+    if (cat.includes("Participation")) return <TrendingUp className="text-blue-300" />;
+    if (cat.includes("Choice")) return <MessageCircle className="text-purple-300" />;
+    if (cat.includes("Leadership")) return <Award className="text-red-400" />;
+    return <BarChart3 className="text-gray-300" />;
+  }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600';
-    if (score >= 6) return 'text-yellow-600';
-    return 'text-red-600';
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#1b4d3e] flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-[#d4a373] mb-4" size={48} />
+        <h2 className="text-xl font-semibold text-white">Analyzing your performance...</h2>
+        <p className="text-green-200">Our AI is reviewing the transcript logic.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#1b4d3e] flex items-center justify-center">
+        <div className="bg-[#2d5a3d] p-8 rounded-xl shadow-lg text-center border border-[#3e6b4e]">
+          <h2 className="text-red-400 text-xl font-bold mb-2">Error</h2>
+          <p className="text-white">{error}</p>
+          <button onClick={() => navigate('/gd-portal')} className="mt-4 px-4 py-2 bg-[#d4a373] text-[#1b4d3e] font-bold rounded hover:bg-[#c49363]">Back to Portal</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!result) return null;
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-[#1b4d3e] p-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Back Button */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-        >
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/gd-portal')}
-            className="gap-2 text-[#0F2C1F] dark:text-[#2d5a3d] hover:text-[#0F2C1F] dark:hover:text-[#2d5a3d] font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Start New Discussion
-          </Button>
-        </motion.div>
 
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-center space-y-2"
-        >
-          <h1 className="font-display text-4xl font-bold text-[#0F2C1F] dark:text-[#2d5a3d]">
-            Your Performance Report
-          </h1>
-          <p className="text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">AI-powered analysis of your group discussion</p>
-          <p className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] italic font-medium">Topic: "{topic}"</p>
-        </motion.div>
-
-        {/* Score Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-card rounded-3xl shadow-elevated p-8"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className="avatar-initial w-20 h-20 text-3xl">
-                Y
-              </div>
-              <div>
-                <h2 className="font-display text-2xl font-semibold text-[#0F2C1F] dark:text-[#2d5a3d]">You</h2>
-                <p className="text-[#0F2C1F] dark:text-[#2d5a3d] font-medium">Discussion Participant</p>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <div className="flex items-center gap-3">
-                <Trophy className="w-8 h-8 text-yellow-500" />
-                <span className="text-5xl font-display font-bold text-[#0F2C1F] dark:text-[#2d5a3d]">
-                  {getRankLabel(result.rank)}
-                </span>
-              </div>
-              <p className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] mt-1 font-medium">Overall Rank</p>
-            </div>
-
-            <div className="text-center">
-              <div className="text-5xl font-display font-bold text-[#0F2C1F] dark:text-[#2d5a3d]">
-                {result.score}
-              </div>
-              <p className="text-sm text-[#0F2C1F] dark:text-[#2d5a3d] mt-1 font-medium">out of 10</p>
-            </div>
+        <div className="bg-[#2d5a3d] rounded-2xl shadow-xl p-8 border border-[#3e6b4e] flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Performance Report</h1>
+            <p className="text-green-200 mt-1">Session ID: {sessionId?.slice(0, 8)}</p>
           </div>
-        </motion.div>
-
-        {/* Score Breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card rounded-3xl shadow-card p-6"
-        >
-          <h3 className="font-display text-xl font-semibold text-[#0F2C1F] dark:text-[#2d5a3d] mb-6 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            Score Breakdown
-          </h3>
-          <div className="space-y-4">
-            {scoreMetrics.map((metric, index) => (
-              <motion.div
-                key={metric.label}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-                className="flex items-center gap-4"
-              >
-                <div className="w-40 flex items-center gap-2">
-                  <metric.icon className="w-4 h-4 text-[#0F2C1F] dark:text-[#2d5a3d]" />
-                  <span className="text-sm font-medium text-[#0F2C1F] dark:text-[#2d5a3d]">{metric.label}</span>
-                </div>
-                <div className="flex-1">
-                  <Progress value={metric.value * 10} className="h-3" />
-                </div>
-                <span className={`w-12 text-right font-semibold ${getScoreColor(metric.value)}`}>
-                  {metric.value.toFixed(1)}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Strengths, Weaknesses, Suggestions */}
-        <div className="grid md:grid-cols-3 gap-4">
-          {/* Strengths */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-card rounded-2xl shadow-card p-5"
-          >
-            <h3 className="font-display text-lg font-semibold text-[#0F2C1F] dark:text-[#2d5a3d] mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              Strengths
-            </h3>
-            <ul className="space-y-2">
-              {result.strengths.map((strength, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-[#0F2C1F] dark:text-[#2d5a3d]">
-                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  {strength}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Areas for Improvement */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="bg-card rounded-2xl shadow-card p-5"
-          >
-            <h3 className="font-display text-lg font-semibold text-[#0F2C1F] dark:text-[#2d5a3d] mb-4 flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-amber-600" />
-              Areas to Improve
-            </h3>
-            <ul className="space-y-2">
-              {result.weaknesses.map((weakness, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-[#0F2C1F] dark:text-[#2d5a3d]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-600 mt-2 flex-shrink-0" />
-                  {weakness}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Suggestions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="bg-card rounded-2xl shadow-card p-5"
-          >
-            <h3 className="font-display text-lg font-semibold text-[#0F2C1F] dark:text-[#2d5a3d] mb-4 flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-primary" />
-              Suggestions
-            </h3>
-            <ul className="space-y-2">
-              {result.suggestions.map((suggestion, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-[#0F2C1F] dark:text-[#2d5a3d]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  {suggestion}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
+          <button onClick={() => navigate('/gd-portal')} className="px-6 py-2 bg-[#d4a373] text-[#1b4d3e] font-bold rounded-lg hover:bg-[#c49363] transition-colors">
+            Back to Portal
+          </button>
         </div>
 
-        {/* Action Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="text-center pt-4"
-        >
-          <Button
-            onClick={() => navigate('/technical-interview')}
-            size="lg"
-            className="h-16 px-12 rounded-2xl font-black text-xl transition-all bg-[#0F2C1F] hover:bg-[#1a402d] text-white shadow-xl shadow-green-900/20 hover:scale-[1.02]"
-          >
-            PROCEED TO TECHNICAL INTERVIEW
-            <ArrowRight className="w-6 h-6 ml-3" />
-          </Button>
-        </motion.div>
+        {/* Scores Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Detailed Metrics */}
+          <div className="bg-[#2d5a3d] rounded-2xl shadow-xl p-6 border border-[#3e6b4e]">
+            <h3 className="text-lg font-semibold mb-6 text-white">Evaluation Metrics</h3>
+            <div className="space-y-6">
+              {Object.entries(result.scores).map(([category, score]) => (
+                <div key={category}>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      {getIcon(category)}
+                      <span className="font-medium text-green-100">{category}</span>
+                    </div>
+                    <span className="font-bold text-white">{score}/10</span>
+                  </div>
+                  <div className="h-2 bg-[#1b4d3e] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#d4a373] rounded-full transition-all duration-1000"
+                      style={{ width: `${(score / 10) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Feedback & Summary */}
+          <div className="space-y-6">
+            <div className="bg-[#2d5a3d] rounded-2xl shadow-xl p-6 border border-[#3e6b4e]">
+              <h3 className="text-lg font-semibold mb-4 text-white">AI Feedback</h3>
+              <p className="text-green-100 leading-relaxed italic">
+                "{result.feedback}"
+              </p>
+            </div>
+
+            <div className="bg-[#2d5a3d] rounded-2xl shadow-xl p-6 border border-[#3e6b4e]">
+              <h3 className="text-lg font-semibold mb-4 text-green-300">Strengths</h3>
+              <ul className="space-y-2">
+                {result.strengths.map((str, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-green-400 mt-1">✓</span>
+                    <span className="text-green-100">{str}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="bg-[#2d5a3d] rounded-2xl shadow-xl p-6 border border-[#3e6b4e]">
+              <h3 className="text-lg font-semibold mb-4 text-orange-300">Areas for Improvement</h3>
+              <ul className="space-y-2">
+                {result.improvements.map((imp, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-orange-400 mt-1">!</span>
+                    <span className="text-green-100">{imp}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Final CTA */}
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => navigate('/technical-interview')}
+                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#d4a373] to-[#c49363] text-[#1b4d3e] rounded-full font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
+              >
+                Proceed to Technical Round <TrendingUp size={20} />
+              </button>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
   );
-}
+};

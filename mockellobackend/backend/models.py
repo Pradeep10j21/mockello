@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from datetime import datetime
 
 # --- Shared Models ---
@@ -164,7 +164,54 @@ class AdminResponse(AdminBase):
     class Config:
         populate_by_name = True
 
-# --- Interview Result Models ---
+# --- [NEW] Specialized Result Models ---
+
+# 1. Mock Placement Result
+class MockPlacementResult(BaseModel):
+    student_email: str
+    student_name: str
+    overall_score: float # e.g. Average of all rounds
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    details: Dict[str, Any] = {} # Flexible for overall report
+
+# 2. Aptitude Result
+class AptitudeResult(BaseModel):
+    student_email: str
+    score: float # 0-100 or actual score
+    total_questions: int
+    correct_answers: int
+    category_breakdown: Dict[str, Any] = {} # e.g. {"Logical": 80, "Verbal": 90}
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# 3. GD Result
+class GDResult(BaseModel):
+    student_email: str # Or peerId if anon, but email strictly preferred for history
+    session_id: str
+    scores: Dict[str, float] # Participation, Creativity, etc.
+    feedback: str
+    strengths: List[str]
+    improvements: List[str]
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# 4. Technical Interview Result
+class TechnicalInterviewResult(BaseModel):
+    student_email: str
+    company_name: str
+    role: str
+    scores: Dict[str, float] # Technical, Problem Solving, etc.
+    feedback: str
+    transcript_summary: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# 5. AI Interview Result (General/Behavioral)
+class AIInterviewResult(BaseModel):
+    student_email: str
+    interview_type: str # 'behavioral', 'hr', etc.
+    scores: Dict[str, float]
+    feedback: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# --- Interview Result Models (Legacy/Company Side) ---
 class InterviewResultBase(BaseModel):
     company_email: EmailStr
     candidate_id: str  # Can be email or name for MVP
@@ -181,7 +228,7 @@ class InterviewResultResponse(InterviewResultBase):
     class Config:
         populate_by_name = True
 
-# --- Unified Score Models ---
+# --- Unified Score Models (Legacy/Optional - keep for backward compat if needed) ---
 class ScoreBase(BaseModel):
     student_name: str
     student_email: str
@@ -194,8 +241,6 @@ class ScoreBase(BaseModel):
     domain: Optional[str] = None
     
     # Detailed Data (Flexible Dict for specific round details)
-    # We use a dict to store the specific breakdown for each round type
-    # instead of creating separate collections for now to keep it simple.
     details: dict = {} 
 
 class ScoreCreate(ScoreBase):

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Wrench, ArrowRight } from "lucide-react";
+import { Users, ArrowRight, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const GDPortal = () => {
@@ -9,7 +9,7 @@ const GDPortal = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1b4d3e] via-[#2d5a3d] to-[#1b4d3e] flex items-center justify-center p-6 relative overflow-hidden leaf-pattern">
 
-      {/* Background patterns could be handled by the 'leaf-pattern' class or SVG overlay */}
+      {/* Background patterns */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -27,11 +27,11 @@ const GDPortal = () => {
         transition={{ duration: 0.8 }}
         className="relative z-10 max-w-3xl w-full text-center"
       >
-        {/* Wrench Icon Circle */}
+        {/* Icon */}
         <div className="mx-auto w-32 h-32 mb-12 relative flex items-center justify-center">
           <div className="absolute inset-0 rounded-full bg-white/10 backdrop-blur-sm border border-white/20" />
           <div className="relative w-20 h-20 rounded-full bg-black/20 flex items-center justify-center border border-white/10">
-            <Wrench className="w-10 h-10 text-[#d4a373]" strokeWidth={1.5} />
+            <Users className="w-10 h-10 text-[#d4a373]" strokeWidth={1.5} />
           </div>
         </div>
 
@@ -43,7 +43,7 @@ const GDPortal = () => {
             transition={{ delay: 0.3 }}
             className="text-[#d4a373] font-bold tracking-[0.2em] text-sm uppercase"
           >
-            Under Maintenance
+            Virtual Practice Room
           </motion.p>
 
           <motion.h1
@@ -52,7 +52,7 @@ const GDPortal = () => {
             transition={{ delay: 0.4 }}
             className="text-5xl md:text-7xl font-serif font-bold text-white leading-tight"
           >
-            GD Coming Soon
+            Group Discussion
           </motion.h1>
 
           <motion.p
@@ -61,24 +61,43 @@ const GDPortal = () => {
             transition={{ delay: 0.5 }}
             className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-medium"
           >
-            We're currently working on improving the GD Room experience. Please check back soon for updates. In the meantime, you can try our Technical Interview module.
+            Practice your group discussion skills with AI-powered participants.
+            Join a virtual room, discuss trending topics, and improve your communication.
           </motion.p>
         </div>
 
-        {/* Action Button */}
+        {/* Features */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.55 }}
+          className="mt-8 flex flex-wrap justify-center gap-4 text-white/70 text-sm"
+        >
+          <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+            <Users className="w-4 h-4" />
+            <span>5 Participants per Room</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full">
+            <MessageSquare className="w-4 h-4" />
+            <span>AI-Powered Discussion</span>
+          </div>
+        </motion.div>
+
+        {/* Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="mt-12"
+          className="mt-12 flex flex-col sm:flex-row gap-4 justify-center"
         >
           <Button
-            onClick={() => navigate('/technical-interview')}
+            onClick={() => navigate('/gd-portal/waiting-room')}
             className="bg-[#d4a373] hover:bg-[#c49363] text-[#1b4d3e] font-bold px-10 py-7 text-lg rounded-none shadow-2xl transition-all group"
           >
-            Try Technical Interview Module
+            Start Group Discussion
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
+
         </motion.div>
       </motion.div>
     </div>

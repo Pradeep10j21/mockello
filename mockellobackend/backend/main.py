@@ -65,6 +65,18 @@ app.include_router(interview_room.router)
 from backend.routers import scores
 app.include_router(scores.router)
 
+from backend.routers import technical_interview
+app.include_router(technical_interview.router)
+
+from backend.routers import gd_session
+app.include_router(gd_session.router)
+
+from backend.routers import gd_transcript
+app.include_router(gd_transcript.router)
+
+from backend.routers import gd_evaluation
+app.include_router(gd_evaluation.router)
+
 @app.get("/")
 def root():
     return {

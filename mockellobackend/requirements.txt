@@ -8,3 +8,5 @@ python-multipart
 python-dotenv
 mangum
 requests
+groq
+pydantic-settings
