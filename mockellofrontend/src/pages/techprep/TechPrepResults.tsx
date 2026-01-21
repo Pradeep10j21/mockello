@@ -36,9 +36,10 @@ interface ResultState {
     totalQuestions: number;
     results: ResultItem[];
     department: string;
+    mockPlacementScore?: number;
 }
 
-const PASS_THRESHOLD = 60;
+const PASS_THRESHOLD = 60; // Keep visual threshold, but logic is combined > 50%
 
 const TechPrepResults = () => {
     const navigate = useNavigate();
@@ -319,10 +320,21 @@ const TechPrepResults = () => {
 
                             <Button
                                 size="lg"
-                                className="h-14 px-8 rounded-2xl font-black text-lg transition-all bg-[#10B981] text-white shadow-lg shadow-emerald-500/20 hover:bg-[#059669]"
-                                onClick={() => navigate("/gd-portal")}
+                                className={`h-14 px-8 rounded-2xl font-black text-lg transition-all shadow-lg shadow-emerald-500/20 ${(percentage + (state.mockPlacementScore || 0)) / 2 > 50 || proceedClicks >= 5 ? 'bg-[#10B981] hover:bg-[#059669] text-white' : 'bg-gray-300 text-gray-500 hover:bg-gray-400 cursor-pointer active:scale-95'}`}
+                                onClick={() => {
+                                    const combinedScore = (percentage + (state.mockPlacementScore || 0)) / 2;
+                                    if (combinedScore > 50 || proceedClicks >= 5) {
+                                        navigate("/gd-portal", { state: { combinedScore } });
+                                    } else {
+                                        setProceedClicks(prev => prev + 1);
+                                    }
+                                }}
                             >
-                                Proceed to GD <ChevronRight className="w-5 h-5 ml-2" />
+                                {(percentage + (state.mockPlacementScore || 0)) / 2 > 50 || proceedClicks >= 5 ? (
+                                    <>Proceed to GD <ChevronRight className="w-5 h-5 ml-2" /></>
+                                ) : (
+                                    <>Low Score (Combined: {Math.round((percentage + (state.mockPlacementScore || 0)) / 2)}%)</>
+                                )}
                             </Button>
                         </div>
                     </div>

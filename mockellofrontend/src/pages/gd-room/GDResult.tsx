@@ -21,6 +21,7 @@ export const Results: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState('');
+  const [proceedClicks, setProceedClicks] = useState(0);
 
   useEffect(() => {
     if (!sessionId || !roomId || !myPeerId) {
@@ -154,12 +155,27 @@ export const Results: React.FC = () => {
 
             {/* Final CTA */}
             <div className="flex justify-center mt-8">
-              <button
-                onClick={() => navigate('/technical-interview')}
-                className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#d4a373] to-[#c49363] text-[#1b4d3e] rounded-full font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
-              >
-                Proceed to Technical Round <TrendingUp size={20} />
-              </button>
+              {(() => {
+                const avgScore = Object.values(result.scores).reduce((a, b) => a + b, 0) / Object.values(result.scores).length;
+                const passed = avgScore > 5;
+                const isLocked = !passed && proceedClicks < 5;
+                return (
+                  <button
+                    onClick={() => {
+                      if (!isLocked) {
+                        navigate('/technical-interview');
+                      } else {
+                        setProceedClicks(prev => prev + 1);
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold shadow-lg transform transition-all ${!isLocked
+                      ? 'bg-gradient-to-r from-[#d4a373] to-[#c49363] text-[#1b4d3e] hover:shadow-xl hover:-translate-y-0.5 pointer-events-auto'
+                      : 'bg-gray-600 text-gray-400 cursor-pointer active:scale-95'}`}
+                  >
+                    {!isLocked ? "Proceed to Technical Round" : `Score Low (${avgScore.toFixed(1)}/10)`} <TrendingUp size={20} />
+                  </button>
+                );
+              })()}
             </div>
 
           </div>

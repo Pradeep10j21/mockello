@@ -387,19 +387,18 @@ const MockPlacementResults = () => {
               Retake
             </Button>
             <Button
-              className={`text-[#0F2C1F] border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-10 px-6 font-semibold ${!(safeResult.correctAnswers > 20 || nextRoundClicks >= 5) ? 'opacity-50 cursor-not-allowed grayscale' : ''
-                }`}
+              className={`text-[#0F2C1F] border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-10 px-6 font-semibold ${(safeResult.correctAnswers > 20 || nextRoundClicks >= 5) ? '' : 'opacity-80 grayscale cursor-pointer active:scale-95'}`}
               style={{ backgroundColor: '#CCDBD0' }}
               onClick={() => {
                 const hasPassed = safeResult.correctAnswers > 20;
                 if (hasPassed || nextRoundClicks >= 5) {
-                  navigate('/techprep');
+                  navigate('/techprep', { state: { mockPlacementScore: safeResult.accuracy } });
                 } else {
                   setNextRoundClicks(prev => prev + 1);
                 }
               }}
             >
-              {safeResult.correctAnswers > 20 ? "Next: Technical Round" : "Technical Round (Locked)"}
+              {safeResult.correctAnswers > 20 || nextRoundClicks >= 5 ? "Next: Technical Round" : "Technical Round (Locked)"}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>

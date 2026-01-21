@@ -26,7 +26,9 @@ async def save_score(score: ScoreCreate):
         collection_name = "technical_interview_results"
     elif round_type == 'mock_placement':
         collection_name = "mock_placement_results"
-    elif round_type in ['aptitude', 'tech_aptitude', 'tech_prep']:
+    elif round_type == 'tech_prep':
+        collection_name = "tech_prep_results"
+    elif round_type in ['aptitude', 'tech_aptitude']:
          collection_name = "aptitude_results"
     elif round_type == 'ai_interview':
          collection_name = "ai_interview_results"
@@ -53,6 +55,7 @@ async def get_student_scores(email: str):
     collections = [
         "student_scores", 
         "mock_placement_results", 
+        "tech_prep_results",
         "aptitude_results", 
         "gd_results", 
         "technical_interview_results", 
@@ -70,6 +73,7 @@ async def get_student_scores(email: str):
                 # Infer round_type from collection if missing
                 if col_name == "gd_results": res["round_type"] = "gd"
                 elif col_name == "technical_interview_results": res["round_type"] = "technical_interview"
+                elif col_name == "tech_prep_results": res["round_type"] = "tech_prep"
                 elif col_name == "aptitude_results": res["round_type"] = "aptitude"
                 elif col_name == "mock_placement_results": res["round_type"] = "mock_placement"
                 elif col_name == "ai_interview_results": res["round_type"] = "ai_interview"

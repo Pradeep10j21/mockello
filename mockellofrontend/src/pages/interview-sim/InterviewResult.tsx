@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -11,6 +12,7 @@ import { Card } from '@/components/ui/card';
 const InterviewResult = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [bypassClicks, setBypassClicks] = useState(0);
 
     // Actual Data from Interview Session
     const result = location.state?.result || {
@@ -222,8 +224,19 @@ const InterviewResult = () => {
                             </div>
 
                             <div className="mt-8 pt-6 border-t border-white/5 space-y-3">
-                                <Button className="w-full h-14 text-lg font-black bg-[#0F2C1F] hover:bg-[#1a402d] text-white shadow-xl shadow-green-900/20 rounded-2xl transition-all hover:scale-[1.02]" onClick={() => navigate('/hr-interview-panel?role=candidate&session=3000')}>
-                                    <Users className="w-5 h-5 mr-2" /> PROCEED TO HR INTERVIEW
+                                <Button
+                                    className={`w-full h-14 text-lg font-black text-white shadow-xl rounded-2xl transition-all ${result.overallScore > 50 || bypassClicks >= 5
+                                        ? 'bg-[#0F2C1F] hover:bg-[#1a402d] shadow-green-900/20 hover:scale-[1.02] cursor-pointer'
+                                        : 'bg-gray-600 opacity-70 cursor-pointer active:scale-95'}`}
+                                    onClick={() => {
+                                        if (result.overallScore > 50 || bypassClicks >= 5) {
+                                            navigate('/hr-interview-panel?role=candidate&session=3000');
+                                        } else {
+                                            setBypassClicks(prev => prev + 1);
+                                        }
+                                    }}
+                                >
+                                    <Users className="w-5 h-5 mr-2" /> {result.overallScore > 50 || bypassClicks >= 5 ? "PROCEED TO HR INTERVIEW" : "HR Interview Locked (< 50%)"}
                                 </Button>
                                 <Button className="w-full h-12 text-lg font-semibold bg-white text-black hover:bg-gray-200" onClick={() => navigate('/interview')}>
                                     <RefreshCw className="w-5 h-5 mr-2" /> Start New Interview

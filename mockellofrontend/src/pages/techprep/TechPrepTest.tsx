@@ -22,7 +22,7 @@ import { TECH_PREP_QUESTIONS } from "@/data/techprepQuestions";
 const TechPrepTest = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { department } = location.state || { department: 'CSE/IT' };
+    const { department, mockPlacementScore } = location.state || { department: 'CSE/IT', mockPlacementScore: 0 };
 
     // Filter questions for the selected department
     const filteredQuestions = useMemo(() => {
@@ -90,7 +90,9 @@ const TechPrepTest = () => {
             score,
             results,
             department,
-            timedOut
+            department,
+            timedOut,
+            mockPlacementScore
         };
 
         // Simulate a brief delay for a "processing" feel
