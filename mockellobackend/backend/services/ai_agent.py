@@ -53,8 +53,8 @@ def process_ai_turn(roomId: str, is_silence_breaker: bool = False):
             print(f"Script finished for room {roomId}.")
             return
 
-        # Natural pause before Bot speaks (Increased to 5s for better flow)
-        time.sleep(5)
+        # Natural pause before Bot speaks (Increased to 7s for better flow)
+        time.sleep(7)
 
         # Re-check updated index & barge-in during sleep
         room_after = database["rooms"].find_one({"roomId": roomId})

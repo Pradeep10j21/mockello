@@ -152,9 +152,14 @@ export const GDSession: React.FC = () => {
 
     const speakNaturally = (text: string) => {
         if (isTalking) return; // Barge-in: Don't start AI speech if user is talking
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.rate = 0.9;
-        window.speechSynthesis.speak(utt);
+
+        // Add a 2s delay in frontend as well to ensure a clean break after transcript appears
+        setTimeout(() => {
+            if (isTalking) return; // Re-check if user started talking during delay
+            const utt = new SpeechSynthesisUtterance(text);
+            utt.rate = 0.9;
+            window.speechSynthesis.speak(utt);
+        }, 2000);
     };
 
     // 6. Poll Transcripts
