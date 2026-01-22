@@ -39,7 +39,7 @@ def login_admin(login_data: UserLogin):
             headers={"WWW-Authenticate": "Bearer"},
         )
         
-    access_token = create_access_token(data={"sub": admin.email, "role": "admin"})
+    access_token = create_access_token(data={"sub": admin["email"], "role": "admin"})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/stats")
